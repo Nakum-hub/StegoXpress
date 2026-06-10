@@ -1,6 +1,8 @@
 import os
 import queue
 import threading
+import time
+from datetime import datetime
 from tkinter import filedialog
 
 import customtkinter as ctk
@@ -9,7 +11,10 @@ from PIL import Image
 from core.crypto_engine import CryptoEngine
 from core.file_packer import FilePacker
 from core.lsb_engine import LSBEngine
+from gui.dnd import enable_image_drop
 from gui.widgets import COLORS, ReusableWidgets, format_bytes, inter, mono
+from utils.config import Config
+from utils.logger import StegoLogger
 
 
 class EncodeTab(ctk.CTkFrame):
@@ -17,6 +22,8 @@ class EncodeTab(ctk.CTkFrame):
         super().__init__(parent, fg_color=COLORS["background"])
         self.on_encode_complete = on_encode_complete
         self.status_callback = None
+        self.history_callback = None
+        self.logger = StegoLogger.get()
         self.image_path = None
         self.cover_image = None
         self.selected_file = None
@@ -38,6 +45,7 @@ class EncodeTab(ctk.CTkFrame):
         self._build_left_column()
         self._build_right_column()
         self._build_action_row()
+        self.setup_drag_and_drop()
         self.after(100, self.process_ui_queue)
 
     def _build_left_column(self):
@@ -186,6 +194,9 @@ class EncodeTab(ctk.CTkFrame):
         if not path:
             return
 
+        self.load_image_path(path)
+
+    def load_image_path(self, path):
         try:
             with Image.open(path) as image:
                 self.cover_image = image.copy()
@@ -206,6 +217,17 @@ class EncodeTab(ctk.CTkFrame):
         self.suggest_output_path(path)
         self.update_capacity_preview()
 
+    def setup_drag_and_drop(self):
+        enable_image_drop(
+            self.preview,
+            self.load_image_path,
+            self.show_error,
+            self.highlight_drop_zone,
+        )
+
+    def highlight_drop_zone(self, active):
+        self.preview.configure(fg_color=COLORS["accent"] if active else COLORS["surface"])
+
     def browse_file(self):
         path = filedialog.askopenfilename(filetypes=[("All files", "*.*")])
         if not path:
@@ -217,7 +239,11 @@ class EncodeTab(ctk.CTkFrame):
         self.update_capacity_preview()
 
     def choose_output(self):
-        initial_dir = os.path.dirname(self.image_path) if self.image_path else os.getcwd()
+        initial_dir = (
+            os.path.dirname(self.image_path)
+            if self.image_path
+            else Config.get("last_output_dir")
+        )
         path = filedialog.asksaveasfilename(
             initialdir=initial_dir,
             defaultextension=".png",
@@ -230,7 +256,12 @@ class EncodeTab(ctk.CTkFrame):
         self.output_entry.insert(0, path)
 
     def suggest_output_path(self, source_path):
-        directory = os.path.dirname(source_path)
+        preferred_directory = Config.get("last_output_dir")
+        directory = (
+            preferred_directory
+            if preferred_directory and os.path.isdir(preferred_directory)
+            else os.path.dirname(source_path)
+        )
         stem = os.path.splitext(os.path.basename(source_path))[0]
         suggested = os.path.join(directory, f"{stem}_stegoxpress.png")
         self.output_entry.delete(0, "end")
@@ -276,7 +307,7 @@ class EncodeTab(ctk.CTkFrame):
 
     def start_encode(self):
         if self.cover_image is None:
-            self.show_error("Load a cover image first.")
+            self.fail_encode_validation("Load a cover image first.")
             return
 
         password = self.password_entry.get()
@@ -284,37 +315,38 @@ class EncodeTab(ctk.CTkFrame):
         output_path = self.output_entry.get().strip()
 
         if not password:
-            self.show_error("Enter a password.")
+            self.fail_encode_validation("Enter a password.")
             return
         if password != confirm:
-            self.show_error("Passwords do not match.")
+            self.fail_encode_validation("Passwords do not match.")
             return
         if not output_path:
-            self.show_error("Choose an output path.")
+            self.fail_encode_validation("Choose an output path.")
             return
 
         try:
             payload = self.build_payload()
         except ValueError as exc:
-            self.show_error(str(exc))
+            self.fail_encode_validation(str(exc))
             return
         except OSError as exc:
-            self.show_error(f"Could not read payload: {exc}")
+            self.fail_encode_validation(f"Could not read payload: {exc}")
             return
 
         capacity = max(FilePacker.max_file_size_for_image(self.cover_image), 0)
         if capacity < len(payload):
-            self.show_error(
+            self.fail_encode_validation(
                 f"Image too small. Need {len(payload) / 1024:.1f}kb, "
                 f"have {capacity / 1024:.1f}kb capacity."
             )
             return
 
         image = self.cover_image.copy()
+        description = self.encode_description(output_path, len(payload))
         self.set_busy(True, "Encoding payload...")
         thread = threading.Thread(
             target=self.encode_worker,
-            args=(image, payload, password, output_path),
+            args=(image, payload, password, output_path, description),
             daemon=True,
         )
         thread.start()
@@ -330,17 +362,48 @@ class EncodeTab(ctk.CTkFrame):
             raise ValueError("Choose a file to hide.")
         return FilePacker.pack_file(self.selected_file)
 
-    def encode_worker(self, image, payload, password, output_path):
+    def encode_description(self, output_path, payload_size):
+        output_name = os.path.basename(output_path)
+        if self.payload_mode.get() == "Text":
+            return f"Encoded text ({payload_size} bytes) into {output_name}"
+
+        filename = os.path.basename(self.selected_file) if self.selected_file else "file"
+        return f"Encoded file '{filename}' ({payload_size} bytes) into {output_name}"
+
+    def encode_worker(self, image, payload, password, output_path, description):
+        start_time = time.perf_counter()
         try:
             encrypted = CryptoEngine.encrypt(payload, password)
             stego_image = LSBEngine.encode(image, encrypted)
             stego_image.save(output_path, "PNG")
             used_percent = LSBEngine.bits_used_percent(image, len(encrypted))
+            duration_ms = (time.perf_counter() - start_time) * 1000
+            self.log_operation(
+                "encode",
+                image,
+                len(payload),
+                True,
+                "",
+                duration_ms,
+            )
             self.ui_queue.put(
-                (self.on_encode_success, (output_path, len(payload), used_percent))
+                (
+                    self.on_encode_success,
+                    (output_path, len(payload), used_percent, duration_ms, description),
+                )
             )
         except Exception as exc:
-            self.ui_queue.put((self.show_error, (str(exc),)))
+            duration_ms = (time.perf_counter() - start_time) * 1000
+            reason = str(exc)
+            self.log_operation(
+                "encode",
+                image,
+                len(payload),
+                False,
+                reason,
+                duration_ms,
+            )
+            self.ui_queue.put((self.on_encode_failure, (reason, duration_ms, description)))
 
     def process_ui_queue(self):
         while True:
@@ -352,7 +415,7 @@ class EncodeTab(ctk.CTkFrame):
 
         self.after(100, self.process_ui_queue)
 
-    def on_encode_success(self, output_path, payload_size, used_percent):
+    def on_encode_success(self, output_path, payload_size, used_percent, duration_ms, description):
         self.set_busy(False, "Encoding complete.")
         self.success_details.configure(
             text=(
@@ -361,9 +424,38 @@ class EncodeTab(ctk.CTkFrame):
             )
         )
         self.success_card.grid()
+        Config.set("last_output_dir", os.path.dirname(os.path.abspath(output_path)))
+        self.add_history("encode", description, True, duration_ms)
         if self.on_encode_complete:
             self.on_encode_complete(output_path)
         self._notify_status("Ready")
+
+    def on_encode_failure(self, reason, duration_ms, description):
+        self.show_error(reason)
+        self.add_history("encode", description, False, duration_ms, reason)
+
+    def fail_encode_validation(self, reason):
+        self.show_error(reason)
+        self.log_operation("encode", self.cover_image, 0, False, reason, 0)
+        self.add_history("encode", "Encode request blocked before processing", False, 0, reason)
+
+    def log_operation(self, operation, image, payload_size, success, reason, duration_ms):
+        dimensions = f"{image.width}x{image.height}" if image is not None else "unknown"
+        self.logger.info(
+            "operation=%s timestamp=%s image_dimensions=%s payload_size=%s "
+            "success=%s reason=%s duration_ms=%.0f",
+            operation,
+            datetime.now().isoformat(timespec="seconds"),
+            dimensions,
+            payload_size,
+            success,
+            reason or "-",
+            duration_ms,
+        )
+
+    def add_history(self, op_type, description, success, duration_ms, reason=""):
+        if self.history_callback:
+            self.history_callback(op_type, description, success, duration_ms, reason)
 
     def set_busy(self, busy, text):
         self.status_label.configure(text=text, text_color=COLORS["text_muted"])

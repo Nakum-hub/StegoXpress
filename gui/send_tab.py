@@ -1,12 +1,17 @@
 import os
 import queue
 import threading
+import time
+from datetime import datetime
 from tkinter import filedialog
 
 import customtkinter as ctk
+from PIL import Image
 
 from gui.widgets import COLORS, ReusableWidgets, inter
 from transport.email_sender import EmailSender
+from utils.config import Config
+from utils.logger import StegoLogger
 
 
 class SendTab(ctk.CTkFrame):
@@ -14,6 +19,8 @@ class SendTab(ctk.CTkFrame):
         super().__init__(parent, fg_color=COLORS["background"])
         self.on_send_success = on_send_success
         self.status_callback = None
+        self.history_callback = None
+        self.logger = StegoLogger.get()
         self.ui_queue = queue.Queue()
 
         self.grid_columnconfigure(0, weight=1)
@@ -32,6 +39,7 @@ class SendTab(ctk.CTkFrame):
         self._build_left_column()
         self._build_right_column()
         self._build_action_row()
+        self.apply_config_defaults()
         self.after(100, self.process_ui_queue)
 
     def _build_left_column(self):
@@ -65,7 +73,7 @@ class SendTab(ctk.CTkFrame):
             corner_radius=8,
         )
         self.provider_segment.grid(row=3, column=0, columnspan=2, sticky="ew", padx=20, pady=(10, 14))
-        self.provider_segment.set("Gmail")
+        self.provider_segment.set(Config.get("default_provider").title())
 
         self.host_entry = ReusableWidgets.entry(left, "SMTP host", width=280)
         self.port_entry = ReusableWidgets.entry(left, "Port", width=110)
@@ -211,6 +219,16 @@ class SendTab(ctk.CTkFrame):
 
         return image_path, username, password
 
+    def apply_config_defaults(self):
+        provider = Config.get("default_provider")
+        if provider:
+            self.provider_segment.set(provider.title())
+            self.on_provider_change()
+
+        if Config.get("remember_sender_email"):
+            self.sender_entry.delete(0, "end")
+            self.sender_entry.insert(0, Config.get("sender_email") or "")
+
     def start_test_connection(self):
         try:
             username, password = self.collect_credentials()
@@ -243,11 +261,11 @@ class SendTab(ctk.CTkFrame):
             hint = self.hint_entry.get().strip()
             sender = self.get_sender()
         except ValueError as exc:
-            self.show_error(str(exc))
+            self.fail_send_validation(str(exc))
             return
 
         if not recipient:
-            self.show_error("Enter the recipient email.")
+            self.fail_send_validation("Enter the recipient email.")
             return
 
         self.set_busy(True, f"Sending image to {recipient}...")
@@ -259,18 +277,76 @@ class SendTab(ctk.CTkFrame):
         thread.start()
 
     def send_worker(self, sender, username, password, recipient, image_path, hint):
+        start_time = time.perf_counter()
+        image_size = os.path.getsize(image_path) if os.path.exists(image_path) else 0
+        dimensions = self.image_dimensions(image_path)
+        description = f"Sent {os.path.basename(image_path)} to {recipient}"
         try:
             sender.send_stego_image(username, password, recipient, image_path, hint)
-            self.ui_queue.put((self.on_send_complete, (recipient,)))
+            duration_ms = (time.perf_counter() - start_time) * 1000
+            self.log_operation(
+                "send",
+                dimensions,
+                image_size,
+                True,
+                "",
+                duration_ms,
+            )
+            self.ui_queue.put((self.on_send_complete, (recipient, duration_ms, description)))
         except Exception as exc:
-            self.ui_queue.put((self.show_error, (str(exc),)))
+            duration_ms = (time.perf_counter() - start_time) * 1000
+            reason = str(exc)
+            self.log_operation(
+                "send",
+                dimensions,
+                image_size,
+                False,
+                reason,
+                duration_ms,
+            )
+            self.ui_queue.put((self.on_send_failure, (reason, duration_ms, description)))
 
-    def on_send_complete(self, recipient):
+    def on_send_complete(self, recipient, duration_ms, description):
         self.set_busy(False, f"Image sent to {recipient}")
         self.status_label.configure(text_color=COLORS["accent"])
+        self.persist_sender_email()
+        self.add_history("send", description, True, duration_ms)
         if self.on_send_success:
             self.on_send_success(recipient)
         self._notify_status("Ready")
+
+    def on_send_failure(self, reason, duration_ms, description):
+        self.show_error(reason)
+        self.add_history("send", description, False, duration_ms, reason)
+
+    def persist_sender_email(self):
+        Config.set("default_provider", self.provider_segment.get().lower())
+        if Config.get("remember_sender_email"):
+            Config.set("sender_email", self.sender_entry.get().strip())
+
+    def image_dimensions(self, image_path):
+        try:
+            with Image.open(image_path) as image:
+                return f"{image.width}x{image.height}"
+        except Exception:
+            return "unknown"
+
+    def log_operation(self, operation, image_dimensions, payload_size, success, reason, duration_ms):
+        self.logger.info(
+            "operation=%s timestamp=%s image_dimensions=%s payload_size=%s "
+            "success=%s reason=%s duration_ms=%.0f",
+            operation,
+            datetime.now().isoformat(timespec="seconds"),
+            image_dimensions,
+            payload_size,
+            success,
+            reason or "-",
+            duration_ms,
+        )
+
+    def add_history(self, op_type, description, success, duration_ms, reason=""):
+        if self.history_callback:
+            self.history_callback(op_type, description, success, duration_ms, reason)
 
     def show_test_result(self, success, message):
         self.test_result.configure(
@@ -289,6 +365,18 @@ class SendTab(ctk.CTkFrame):
         self.set_busy(False, message)
         self.status_label.configure(text=message, text_color=COLORS["error"])
         self._notify_status("Ready")
+
+    def fail_send_validation(self, reason):
+        self.show_error(reason)
+        self.log_operation(
+            "send",
+            "unknown",
+            0,
+            False,
+            reason,
+            0,
+        )
+        self.add_history("send", "Send request blocked before processing", False, 0, reason)
 
     def process_ui_queue(self):
         while True:

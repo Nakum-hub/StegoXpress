@@ -11,6 +11,11 @@ StegoXpress is a Python steganography application for hiding encrypted text or f
 - CustomTkinter desktop GUI with Encode, Decode, and Send workflows.
 - SMTP transport for Gmail, Outlook, Yahoo, or custom providers.
 - Email sends only the stego image. Passwords must be shared out-of-band.
+- Drag-and-drop image loading in Encode and Decode tabs.
+- Session history for encode, decode, and send operations.
+- Rotating local logs under `~/.stegoxpress/logs/`.
+- Persistent user preferences under `~/.stegoxpress/config.json`.
+- Headless CLI mode for encode/decode automation.
 
 ## Project Structure
 
@@ -24,10 +29,14 @@ gui/
   encode_tab.py       # Encode and hide workflow
   decode_tab.py       # Decode and extract workflow
   send_tab.py         # Secure email transport workflow
+  history_tab.py      # In-memory session history
   widgets.py          # Shared design-system widgets
 transport/
   email_sender.py     # SMTP provider transport
   key_manager.py      # Password hint QR and strength helper
+utils/
+  config.py           # User preferences in ~/.stegoxpress/config.json
+  logger.py           # Rotating logs in ~/.stegoxpress/logs/
 tests/
   test_roundtrip.py
   test_transport.py
@@ -46,16 +55,56 @@ python -m pip install -r requirements.txt
 python main.py
 ```
 
+## CLI
+
+Encode text:
+
+```powershell
+python main.py encode --image cover.png --message "secret text" --password mypass --output out.png
+```
+
+Encode a file:
+
+```powershell
+python main.py encode --image cover.png --file secret.pdf --password mypass --output out.png
+```
+
+Decode:
+
+```powershell
+python main.py decode --image out.png --password mypass
+```
+
 ## Test
 
 ```powershell
-python -m pytest -q
+pytest tests/ -v
 ```
 
 Expected result:
 
 ```text
-17 passed
+22 passed
+```
+
+## Build
+
+Install dependencies:
+
+```powershell
+pip install -r requirements.txt
+```
+
+Build a Windows EXE:
+
+```powershell
+pyinstaller --onefile --windowed --icon=assets/logo.ico main.py
+```
+
+Build a macOS app:
+
+```bash
+pyinstaller --onefile --windowed --icon=assets/logo.ico main.py
 ```
 
 ## Secure Email Workflow

@@ -1,6 +1,8 @@
 import os
 import queue
 import threading
+import time
+from datetime import datetime
 from tkinter import filedialog
 
 import customtkinter as ctk
@@ -9,13 +11,17 @@ from PIL import Image
 from core.crypto_engine import CryptoEngine
 from core.file_packer import FilePacker
 from core.lsb_engine import LSBEngine
+from gui.dnd import enable_image_drop
 from gui.widgets import COLORS, ReusableWidgets, format_bytes, inter, mono
+from utils.logger import StegoLogger
 
 
 class DecodeTab(ctk.CTkFrame):
     def __init__(self, parent):
         super().__init__(parent, fg_color=COLORS["background"])
         self.status_callback = None
+        self.history_callback = None
+        self.logger = StegoLogger.get()
         self.image_path = None
         self.stego_image = None
         self.result = None
@@ -36,6 +42,7 @@ class DecodeTab(ctk.CTkFrame):
 
         self._build_input_area()
         self._build_results_area()
+        self.setup_drag_and_drop()
         self.after(100, self.process_ui_queue)
 
     def _build_input_area(self):
@@ -165,37 +172,58 @@ class DecodeTab(ctk.CTkFrame):
         self.hide_results()
         self.status_label.grid_remove()
 
+    def setup_drag_and_drop(self):
+        enable_image_drop(
+            self.preview,
+            self.load_image_path,
+            self.show_error,
+            self.highlight_drop_zone,
+        )
+
+    def highlight_drop_zone(self, active):
+        self.preview.configure(fg_color=COLORS["accent"] if active else COLORS["surface"])
+
     def start_decode(self):
         if self.stego_image is None:
-            self.show_error("Load a stego image first.")
+            self.fail_decode_validation("Load a stego image first.")
             return
 
         password = self.password_entry.get()
         if not password:
-            self.show_error("Enter the password.")
+            self.fail_decode_validation("Enter the password.")
             return
 
         image = self.stego_image.copy()
+        image_path = self.image_path
         self.set_busy(True, "Decoding image...")
         thread = threading.Thread(
             target=self.decode_worker,
-            args=(image, password),
+            args=(image, password, image_path),
             daemon=True,
         )
         thread.start()
 
-    def decode_worker(self, image, password):
+    def decode_worker(self, image, password, image_path):
+        start_time = time.perf_counter()
+        payload_size = 0
         try:
             raw_encrypted = LSBEngine.decode(image)
+            payload_size = len(raw_encrypted)
             try:
                 payload = CryptoEngine.decrypt(raw_encrypted, password)
             except ValueError as exc:
                 raise ValueError("Wrong password or image is not a StegoXpress image") from exc
 
             result = FilePacker.unpack(payload)
-            self.ui_queue.put((self.show_result, (result,)))
+            payload_size = len(payload)
+            duration_ms = (time.perf_counter() - start_time) * 1000
+            self.log_operation("decode", image, payload_size, True, "", duration_ms)
+            self.ui_queue.put((self.show_result, (result, duration_ms, image_path)))
         except Exception as exc:
-            self.ui_queue.put((self.show_error, (str(exc),)))
+            duration_ms = (time.perf_counter() - start_time) * 1000
+            reason = str(exc)
+            self.log_operation("decode", image, payload_size, False, reason, duration_ms)
+            self.ui_queue.put((self.on_decode_failure, (reason, duration_ms, image_path)))
 
     def process_ui_queue(self):
         while True:
@@ -207,13 +235,17 @@ class DecodeTab(ctk.CTkFrame):
 
         self.after(100, self.process_ui_queue)
 
-    def show_result(self, result):
+    def show_result(self, result, duration_ms=0, image_path=None):
         self.result = result
         self.set_busy(False, "Decode complete.")
         self.hide_results()
         self.results_card.grid()
 
         if result["type"] == "text":
+            description = (
+                f"Decoded text ({len(result['data'])} bytes) from "
+                f"{os.path.basename(image_path or self.image_path or 'image')}"
+            )
             self.result_textbox.grid(row=1, column=0, sticky="ew", padx=18, pady=(0, 12))
             self.result_textbox.configure(state="normal")
             self.result_textbox.delete("1.0", "end")
@@ -221,6 +253,10 @@ class DecodeTab(ctk.CTkFrame):
             self.result_textbox.configure(state="disabled")
             self.copy_button.grid(row=2, column=0, sticky="w", padx=18, pady=(0, 14))
         else:
+            description = (
+                f"Decoded file '{result['filename']}' from "
+                f"{os.path.basename(image_path or self.image_path or 'image')}"
+            )
             self.file_result_label.configure(
                 text=f"{result['filename']} | {format_bytes(len(result['data']))}"
             )
@@ -228,7 +264,36 @@ class DecodeTab(ctk.CTkFrame):
             self.save_button.grid(row=2, column=0, sticky="w", padx=18, pady=(0, 14))
 
         self.clear_button.grid(row=3, column=0, sticky="w", padx=18, pady=(0, 16))
+        self.add_history("decode", description, True, duration_ms)
         self._notify_status("Ready")
+
+    def on_decode_failure(self, reason, duration_ms, image_path):
+        self.show_error(reason)
+        description = f"Decode failed for {os.path.basename(image_path or 'image')}"
+        self.add_history("decode", description, False, duration_ms, reason)
+
+    def fail_decode_validation(self, reason):
+        self.show_error(reason)
+        self.log_operation("decode", self.stego_image, 0, False, reason, 0)
+        self.add_history("decode", "Decode request blocked before processing", False, 0, reason)
+
+    def log_operation(self, operation, image, payload_size, success, reason, duration_ms):
+        dimensions = f"{image.width}x{image.height}" if image is not None else "unknown"
+        self.logger.info(
+            "operation=%s timestamp=%s image_dimensions=%s payload_size=%s "
+            "success=%s reason=%s duration_ms=%.0f",
+            operation,
+            datetime.now().isoformat(timespec="seconds"),
+            dimensions,
+            payload_size,
+            success,
+            reason or "-",
+            duration_ms,
+        )
+
+    def add_history(self, op_type, description, success, duration_ms, reason=""):
+        if self.history_callback:
+            self.history_callback(op_type, description, success, duration_ms, reason)
 
     def hide_results(self):
         self.result_textbox.grid_remove()
