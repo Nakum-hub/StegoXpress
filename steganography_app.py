@@ -18,11 +18,16 @@ import os
 
 
 class SteganographyApp:
+    LENGTH_HEADER_BYTES = 4
+    EMBED_CHANNELS = 3
+
     def __init__(self, root):
         self.root = root
         self.root.title("Image Steganography Tool")
         self.root.geometry("700x650")
         self.root.configure(bg="#1e1e1e")
+        self.cover_image_path = tk.StringVar()
+        self.hidden_file_path = tk.StringVar()
 
         # Title
         tk.Label(
@@ -285,32 +290,33 @@ class SteganographyApp:
 </head>
 <body>
     <h1>Project Information</h1>
-    <p>This project was developed by Naresh G, Madhihally Arun Kumar Tarun, Manoj S Rathod, Harish D as part of a 5th Sem mini project. 
+    <p>This project was developed by Naresh G, Naveen T S, Dhanush S A, Ashwini B , Anagha M Hebbar, and Deepika  as part of a Cyber Security Internship. 
     It is designed to secure organizations in the real world from cyber frauds performed by hackers.</p>
     
     <h2>Project Details</h2>
     <table>
         <tr><th>Project Name</th><td>Image Steganography using LSB</td></tr>
         <tr><th>Project Description</th><td>Hiding Message with Encryption in Image using LSB Algorithm</td></tr>
-        <tr><th>Project Start Date</th><td>30-SEP-2024</td></tr>
-        <tr><th>Project End Date</th><td>07-DEC-2024</td></tr>
+        <tr><th>Project Start Date</th><td>16-Nov-2024</td></tr>
+        <tr><th>Project End Date</th><td>21-DEC-2024</td></tr>
         <tr><th>Project Status</th><td>Completed</td></tr>
     </table>
 
     <h2>Developer Details</h2>
     <table>
-        <tr><th>Name</th><th>USN</th><th>Email</th></tr>
-        <tr><td>Naresh G</td><td>1ST22CY036</td><td>gnaresh3003@gmail.com</td></tr>
-        <tr><td>Madhihally Arun Kumar Tarun</td><td>1ST22CY033</td><td>tarunma04@gmail.com</td></tr>
-        <tr><td>Manoj S Rathod</td><td>1ST22CY030</td><td>manojsrathode432@gmail.com</td></tr>
-        <tr><td>Harish D</td><td>1ST22CY014</td><td>harishdj2002@gmail.com</td></tr>
+        <tr><th>Name</th><th>Employee ID</th><th>Email</th></tr>
+        <tr><td>Naresh G</td><td>ST#IS#7054</td><td>gnaresh3003@gmail.com</td></tr>
+        <tr><td>Naveen T S</td><td>ST#IS#7055</td><td>tsnaveen@gmail.com</td></tr>
+        <tr><td>Dhanush S A</td><td>ST#IS#7056</td><td>dhanushgowda007sa@gmail.com</td></tr>
+        <tr><td>Anagha M Hebbar </td><td>ST#IS#7057</td><td>anagha5454@gmail.com</td></tr>
+        <tr><td>Ashwini B</td><td>ST#IS#7058</td><td>ashb2224@gmail.com</td></tr>
+        <tr><td>Deepika </td><td>ST#IS#7059</td><td>deepika3452622@gmail.com</td></tr>
     </table>
 
-    <h2>College Details</h2>
+    <h2>Company Details</h2>
     <table>
-        <tr><th>College Name</th><td>Sambhram Institute of Technology</td></tr>
-        <tr><th>Project Guide</th><td>Dr. Sanjeetha R</td></tr>
-        <tr><th>Designation</th><td>HOD of CSE Cyber Secrity Department</td></tr>
+        <tr><th>Company Name</th><td>Supraja Technologies</td></tr>
+        <tr><th>Email</th><td>contact@suprajatechnologies.com</td></tr>
     </table>
 </body>
 </html>
@@ -352,111 +358,168 @@ class SteganographyApp:
             secret_message = f.encrypt(message.encode())
 
             # Open the image
-            image = Image.open(image_file)
-            pixels = list(image.getdata())
+            with Image.open(image_file) as image:
+                if not self.check_image_capacity(image, secret_message):
+                    return
+                encoded_image = self.embed_message(image, secret_message)
 
-            # Convert the encrypted message to binary
-            binary_secret = "".join(format(byte, "08b") for byte in secret_message)
-            new_pixels = []
-            pixel_index = 0
+            output_image_path = self.get_output_image_path(image_file)
+            encoded_image.save(output_image_path, "PNG")
 
-            # Embed the binary data into the least significant bits of the image pixels
-            for pixel in pixels:
-                r, g, b = pixel
-                if pixel_index < len(binary_secret):
-                    r = r & 0xFE | int(binary_secret[pixel_index])
-                    pixel_index += 1
-                if pixel_index < len(binary_secret):
-                    g = g & 0xFE | int(binary_secret[pixel_index])
-                    pixel_index += 1
-                if pixel_index < len(binary_secret):
-                    b = b & 0xFE | int(binary_secret[pixel_index])
-                    pixel_index += 1
-                new_pixels.append((r, g, b))
-
-            image.putdata(new_pixels)
-            output_image_path = f"{os.path.splitext(os.path.basename(image_file))[0]}.png"
-            image.save(output_image_path, "PNG")
-
-            # Send the email with the encryption key in the subject
-            self.send_email(
+            # Send only the encrypted image. The key must be shared separately.
+            if not self.send_email(
                 output_image_path,
-                key.decode(),
                 sender_email,
                 sender_password,
                 recipient_email,
-            )
+            ):
+                return
 
             messagebox.showinfo(
-                "Success", f"Image encrypted and sent to {recipient_email}."
+                "Success",
+                "Image encrypted and sent to "
+                f"{recipient_email}.\n\nShare this decryption key through a separate channel:\n"
+                f"{key.decode()}",
             )
             self.clear_fields()
 
         except Exception as e:
             messagebox.showerror("Error", f"An error occurred during encryption: {str(e)}")
-    def check_image_capacity(self, message):
-        # Convert message to binary
-        binary_message = ''.join(format(ord(char), '08b') for char in message)
-        message_length_in_bits = len(binary_message)
-    
-        # Calculate the available space in the image
-        image_file = self.image_path.get()
-        image = Image.open(image_file)
-        image_pixels = image.size[0] * image.size[1] * 3  # 3 channels: R, G, B
-    
-        if message_length_in_bits > image_pixels:
-            messagebox.showerror("Error", "The message is too long for this image. Please select a larger image or split the message.")
-            return False
-        return True
-    
-    
-    def embed_message(self, image, message):
-        binary_message = ''.join(format(ord(char), '08b') for char in message)
-        pixels = list(image.getdata())
-        new_pixels = []
-        pixel_index = 0
 
-        for pixel in pixels:
-            r, g, b = pixel
-            if pixel_index < len(binary_message):
-                r = r & 0xFC | int(binary_message[pixel_index:pixel_index+2], 2)
-                pixel_index += 2
-            if pixel_index < len(binary_message):
-                g = g & 0xFC | int(binary_message[pixel_index:pixel_index+2], 2)
-                pixel_index += 2
-            if pixel_index < len(binary_message):
-                b = b & 0xFC | int(binary_message[pixel_index:pixel_index+2], 2)
-                pixel_index += 2
-            new_pixels.append((r, g, b))
+    def prepare_image_for_lsb(self, image):
+        if image.mode in ("RGB", "RGBA"):
+            return image.copy()
+
+        if "A" in image.getbands() or "transparency" in image.info:
+            return image.convert("RGBA")
+
+        return image.convert("RGB")
+
+    def get_capacity_bits(self, image):
+        return image.size[0] * image.size[1] * self.EMBED_CHANNELS
+
+    def check_image_capacity(self, image, payload):
+        payload_length = len(payload)
+        required_bits = (self.LENGTH_HEADER_BYTES + payload_length) * 8
+        capacity_bits = self.get_capacity_bits(image)
+
+        if required_bits > capacity_bits:
+            max_payload_bytes = max(
+                (capacity_bits - self.LENGTH_HEADER_BYTES * 8) // 8,
+                0,
+            )
+            messagebox.showerror(
+                "Error",
+                "The encrypted message is too long for this image. "
+                f"It needs {required_bits} bits, but the image only has "
+                f"{capacity_bits} usable bits. Maximum encrypted payload: "
+                f"{max_payload_bytes} bytes.",
+            )
+            return False
+
+        return True
+
+    def get_output_image_path(self, image_file):
+        directory = os.path.dirname(os.path.abspath(image_file))
+        base_name = os.path.splitext(os.path.basename(image_file))[0]
+        candidate = os.path.join(directory, f"{base_name}_encrypted.png")
+        suffix = 1
+
+        while os.path.exists(candidate):
+            candidate = os.path.join(directory, f"{base_name}_encrypted_{suffix}.png")
+            suffix += 1
+
+        return candidate
+
+    def embed_message(self, image, payload):
+        if not isinstance(payload, bytes):
+            payload = str(payload).encode("utf-8")
+
+        image = self.prepare_image_for_lsb(image)
+        payload_with_header = (
+            len(payload).to_bytes(self.LENGTH_HEADER_BYTES, "big") + payload
+        )
+        binary_payload = "".join(format(byte, "08b") for byte in payload_with_header)
+        capacity_bits = self.get_capacity_bits(image)
+
+        if len(binary_payload) > capacity_bits:
+            raise ValueError(
+                "The encrypted message is too long for this image. "
+                f"Required bits: {len(binary_payload)}, available bits: {capacity_bits}."
+            )
+
+        new_pixels = []
+        bit_index = 0
+
+        for pixel in image.getdata():
+            channels = list(pixel)
+
+            for channel_index in range(self.EMBED_CHANNELS):
+                if bit_index >= len(binary_payload):
+                    break
+                channels[channel_index] = (
+                    channels[channel_index] & 0xFE
+                ) | int(binary_payload[bit_index])
+                bit_index += 1
+
+            new_pixels.append(tuple(channels))
 
         image.putdata(new_pixels)
         return image
-    def split_message(self, message, max_image_capacity):
-        # Split the message into parts that can fit into the image
-        binary_message = ''.join(format(ord(char), '08b') for char in message)
-        parts = []
-    
-        while len(binary_message) > max_image_capacity:
-            parts.append(binary_message[:max_image_capacity])
-            binary_message = binary_message[max_image_capacity:]
-    
-        if binary_message:
-            parts.append(binary_message)
-    
-        return parts
 
+    def iter_lsb_bits(self, image):
+        image = self.prepare_image_for_lsb(image)
 
+        for pixel in image.getdata():
+            for channel in pixel[: self.EMBED_CHANNELS]:
+                yield channel & 1
 
+    def read_lsb_bits(self, bit_iter, bit_count):
+        bits = []
 
-    def send_email(self, image_path, key, sender_email, sender_password, recipient_email):
+        for _ in range(bit_count):
+            try:
+                bits.append(str(next(bit_iter)))
+            except StopIteration as exc:
+                raise ValueError(
+                    "The image does not contain a complete hidden payload."
+                ) from exc
+
+        return "".join(bits)
+
+    def extract_message(self, image):
+        capacity_bits = self.get_capacity_bits(image)
+        header_bits_count = self.LENGTH_HEADER_BYTES * 8
+
+        if capacity_bits < header_bits_count:
+            raise ValueError("The image is too small to contain a hidden payload.")
+
+        bit_iter = self.iter_lsb_bits(image)
+        header_bits = self.read_lsb_bits(bit_iter, header_bits_count)
+        payload_length = int(header_bits, 2)
+        max_payload_length = (capacity_bits - header_bits_count) // 8
+
+        if payload_length <= 0 or payload_length > max_payload_length:
+            raise ValueError("The image does not contain a valid hidden payload length.")
+
+        payload_bits = self.read_lsb_bits(bit_iter, payload_length * 8)
+        return bytes(
+            int(payload_bits[index : index + 8], 2)
+            for index in range(0, len(payload_bits), 8)
+        )
+
+    def send_email(self, image_path, sender_email, sender_password, recipient_email):
         try:
             msg = MIMEMultipart()
             msg["From"] = sender_email
             msg["To"] = recipient_email
-            msg["Subject"] = "Your Encryption Key and Image"
+            msg["Subject"] = "Encrypted Image"
 
-            # Modify the body text to include the encryption key
-            body = f"Please find the attached encrypted image. Use the encryption key provided in the subject to decrypt it: {key}"
+            body = (
+                "Please find the attached encrypted image.\n\n"
+                "The decryption key is not included in this email. "
+                "Share it through a separate secure channel."
+            )
             msg.attach(MIMEText(body, "plain"))
 
             # Attach the image
@@ -476,9 +539,11 @@ class SteganographyApp:
             server.login(sender_email, sender_password)
             server.sendmail(sender_email, recipient_email, msg.as_string())
             server.quit()
+            return True
 
         except Exception as e:
             messagebox.showerror("Error", f"Failed to send email: {str(e)}")
+            return False
 
 
     def decrypt_action(self):
@@ -497,57 +562,31 @@ class SteganographyApp:
         try:
             # Convert the key from string to bytes for Fernet
             f = Fernet(key.encode())
-            print(f"Using key: {key}")
 
             # Open the encrypted image and extract the pixel data
-            encoded_image = Image.open(encrypted_image_path)
-            pixels = list(encoded_image.getdata())
-
-            # Extract the binary data hidden in the image pixels
-            binary_secret = ''
-            for pixel in pixels:
-                r, g, b = pixel
-                binary_secret += str(r & 1)  # Extract LSB of red channel
-                binary_secret += str(g & 1)  # Extract LSB of green channel
-                binary_secret += str(b & 1)  # Extract LSB of blue channel
-
-            print(f"Binary secret extracted: {binary_secret[:100]}...")  # Log first 100 bits for debugging
-
-            # Check if the binary secret has sufficient length
-            expected_len = len(binary_secret)
-            print(f"Total extracted binary bits: {expected_len}")
-
-            if expected_len < 8:
-                raise Exception("Insufficient data extracted. The image may not contain enough hidden information.")
-
-            # Convert the binary string into the original message bytes
-            byte_array = bytearray()
-            for i in range(0, len(binary_secret), 8):
-                byte = binary_secret[i:i + 8]
-                if len(byte) == 8:  # Only consider valid 8-bit segments
-                    byte_array.append(int(byte, 2))
-
-            print(f"Byte array length: {len(byte_array)} bytes")  # Check the byte array length
-            print(f"First 20 bytes: {byte_array[:20]}...")  # Log first 20 bytes for debugging
-
-            # Ensure that we have a reasonable message length
-            if len(byte_array) < 10:
-                raise Exception("The extracted binary data is too short to be a valid encrypted message.")
-
-            # Convert byte array to a string and remove padding (null bytes) if necessary
-            extracted_message = bytes(byte_array).decode('utf-8', errors='ignore').rstrip('\x00')
+            with Image.open(encrypted_image_path) as encoded_image:
+                encrypted_payload = self.extract_message(encoded_image)
 
             # Decrypt the message using Fernet
-            print(f"Extracted message length: {len(extracted_message)} characters")
-            original_message = f.decrypt(extracted_message.encode()).decode()
+            original_message = f.decrypt(encrypted_payload).decode("utf-8")
 
             # Show the decrypted message in the main thread
-            self.root.after(0, messagebox.showinfo, "Success", "The Hidden Text is:\n" + original_message)
-            self.clear_fields()
+            self.root.after(0, self.show_decryption_success, original_message)
 
         except Exception as e:
-            self.root.after(0, messagebox.showerror, "Error", f"An error occurred during decryption: {str(e)}")
-            self.clear_fields()
+            error_message = str(e)
+            self.root.after(0, self.show_decryption_error, error_message)
+
+    def show_decryption_success(self, original_message):
+        messagebox.showinfo("Success", "The Hidden Text is:\n" + original_message)
+        self.clear_fields()
+
+    def show_decryption_error(self, error_message):
+        messagebox.showerror(
+            "Error",
+            f"An error occurred during decryption: {error_message}",
+        )
+        self.clear_fields()
 
 
 

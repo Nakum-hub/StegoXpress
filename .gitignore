@@ -1,0 +1,25 @@
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+.venv/
+venv/
+env/
+
+*.log
+*.tmp
+*.bak
+
+# Local generated outputs
+*_stegoxpress.png
+*_encrypted.png
+stegoxpress_hint_*.png
+
+# Build artifacts should be regenerated locally.
+build/
+dist/
