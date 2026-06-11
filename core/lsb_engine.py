@@ -1,3 +1,4 @@
+import math
 import struct
 from PIL import Image
 
@@ -59,10 +60,109 @@ class LSBEngine:
         return ((payload_bytes + 4) * 8) / (image.width * image.height * 3) * 100
 
     @staticmethod
+    def generate_heatmap(image: Image.Image) -> Image.Image:
+        working_image = image.convert("RGB")
+        width, height = working_image.size
+        pixels = working_image.load()
+        heatmap = Image.new("RGB", working_image.size)
+        heatmap_pixels = heatmap.load()
+        max_entropy = math.log2(75)
+
+        for y in range(height):
+            for x in range(width):
+                values = []
+
+                for window_y in range(max(0, y - 2), min(height, y + 3)):
+                    for window_x in range(max(0, x - 2), min(width, x + 3)):
+                        values.extend(pixels[window_x, window_y])
+
+                total = len(values)
+                histogram = {}
+                for value in values:
+                    histogram[value] = histogram.get(value, 0) + 1
+
+                entropy = 0.0
+                for count in histogram.values():
+                    probability = count / total
+                    if probability > 0:
+                        entropy -= probability * math.log2(probability)
+
+                normalized = min(max(entropy / max_entropy, 0.0), 1.0)
+                heatmap_pixels[x, y] = LSBEngine._entropy_color(normalized)
+
+        return heatmap
+
+    @staticmethod
+    def steganalysis_score(original: Image.Image, stego: Image.Image) -> float:
+        original_rgb = original.convert("RGB")
+        stego_rgb = stego.convert("RGB")
+
+        if original_rgb.size != stego_rgb.size:
+            raise ValueError("Original and stego images must have the same size")
+
+        width, height = stego_rgb.size
+        if width < 8 or height == 0:
+            return 0.0
+
+        stego_pixels = stego_rgb.load()
+        regular_count = 0
+        singular_count = 0
+        total_groups = 0
+        flipping_mask = [0, 1, 0, 1, 0, 1, 0, 1]
+
+        for y in range(height):
+            for x in range(0, width - 7, 8):
+                group = [
+                    LSBEngine._pixel_intensity(stego_pixels[x + offset, y])
+                    for offset in range(8)
+                ]
+                flipped = [
+                    value ^ flipping_mask[index]
+                    for index, value in enumerate(group)
+                ]
+                original_smoothness = LSBEngine._smoothness(group)
+                flipped_smoothness = LSBEngine._smoothness(flipped)
+
+                if flipped_smoothness > original_smoothness:
+                    regular_count += 1
+                elif flipped_smoothness < original_smoothness:
+                    singular_count += 1
+
+                total_groups += 1
+
+        if total_groups == 0:
+            return 0.0
+
+        return min(abs(regular_count - singular_count) / total_groups, 1.0)
+
+    @staticmethod
     def _to_rgb_image(image: Image.Image) -> Image.Image:
         if "A" in image.getbands() or "transparency" in image.info:
             return image.convert("RGBA").convert("RGB")
         return image.convert("RGB")
+
+    @staticmethod
+    def _entropy_color(value: float) -> tuple[int, int, int]:
+        if value <= 0.5:
+            ratio = value / 0.5
+            red = 0
+            green = round(255 * ratio)
+            blue = round(255 * (1 - ratio))
+        else:
+            ratio = (value - 0.5) / 0.5
+            red = round(255 * ratio)
+            green = round(255 * (1 - ratio))
+            blue = 0
+
+        return red, green, blue
+
+    @staticmethod
+    def _pixel_intensity(pixel: tuple[int, int, int]) -> int:
+        return round((pixel[0] + pixel[1] + pixel[2]) / 3)
+
+    @staticmethod
+    def _smoothness(group: list[int]) -> int:
+        return sum(abs(group[index + 1] - group[index]) for index in range(7))
 
     @staticmethod
     def _iter_lsb_bits(image: Image.Image):
