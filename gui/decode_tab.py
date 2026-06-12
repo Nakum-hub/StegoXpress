@@ -19,6 +19,8 @@ from utils.logger import StegoLogger
 
 
 class DecodeTab(ctk.CTkFrame):
+    CARRIERS = ["Image (LSB)", "Audio (WAV)", "PNG Metadata"]
+
     def __init__(self, parent):
         super().__init__(parent, fg_color=COLORS["background"])
         self.status_callback = None
@@ -48,8 +50,6 @@ class DecodeTab(ctk.CTkFrame):
         self.setup_drag_and_drop()
         self.after(100, self.process_ui_queue)
 
-    CARRIERS = ["Image (LSB)", "Audio (WAV)", "PNG Metadata"]
-
     def _build_input_area(self):
         left = ReusableWidgets.card(self.content)
         left.grid(row=0, column=0, sticky="nsew", padx=(0, 12), pady=(0, 14))
@@ -73,7 +73,7 @@ class DecodeTab(ctk.CTkFrame):
         self.audio_frame = ctk.CTkFrame(left, fg_color="transparent")
         self.audio_frame.grid(row=2, column=0, sticky="ew", padx=20, pady=(0, 6))
         self.audio_frame.grid_columnconfigure(0, weight=1)
-        self.audio_entry = ReusableWidgets.entry(self.audio_frame, "Select .wav file…")
+        self.audio_entry = ReusableWidgets.entry(self.audio_frame, "Select .wav file\u2026")
         self.audio_entry.grid(row=0, column=0, sticky="ew", padx=(0, 6))
         ReusableWidgets.ghost_button(
             self.audio_frame, "Browse", self._browse_audio, width=70
@@ -82,21 +82,22 @@ class DecodeTab(ctk.CTkFrame):
 
         self._section_header(left, "STEGO IMAGE", 3)
         self.preview = ReusableWidgets.image_preview(left, size=280)
-        self.preview.grid(row=1, column=0, pady=(10, 12))
+        self.preview.grid(row=4, column=0, pady=(10, 12))
 
         browse = ReusableWidgets.ghost_button(left, "Browse Stego Image", self.browse_image)
-        browse.grid(row=2, column=0, pady=(0, 14))
+        browse.grid(row=5, column=0, pady=(0, 14))
 
         self.image_info = ReusableWidgets.label(left, "No image selected", muted=True)
-        self.image_info.grid(row=3, column=0, sticky="w", padx=20, pady=(0, 18))
+        self.image_info.grid(row=6, column=0, sticky="w", padx=20, pady=(0, 18))
 
         right = ReusableWidgets.card(self.content)
         right.grid(row=0, column=1, sticky="nsew", padx=(12, 0), pady=(0, 14))
         right.grid_columnconfigure(0, weight=1)
 
         self._section_header(right, "DECRYPTION", 0)
-        ReusableWidgets.label(right, "Password", muted=True).grid(row=1, column=0, sticky="w", padx=20, pady=(8, 0))
-        self.password_entry = ReusableWidgets.entry(right, "Password", show="•")
+        ReusableWidgets.label(right, "Password", muted=True).grid(
+            row=1, column=0, sticky="w", padx=20, pady=(8, 0))
+        self.password_entry = ReusableWidgets.entry(right, "Password", show="\u2022")
         self.password_entry.grid(row=2, column=0, sticky="ew", padx=20, pady=(4, 16))
 
         self.decode_button = ReusableWidgets.primary_button(
@@ -235,17 +236,20 @@ class DecodeTab(ctk.CTkFrame):
 
         if carrier == "Audio (WAV)":
             if not self.audio_path or not os.path.exists(self.audio_path):
-                self.fail_decode_validation("Select a WAV audio file first."); return
+                self.fail_decode_validation("Select a WAV audio file first.")
+                return
         elif self.stego_image is None:
-            self.fail_decode_validation("Load a stego image first."); return
+            self.fail_decode_validation("Load a stego image first.")
+            return
 
         password = self.password_entry.get()
         if not password:
-            self.fail_decode_validation("Enter the password."); return
+            self.fail_decode_validation("Enter the password.")
+            return
 
         image = self.stego_image.copy() if self.stego_image else None
         image_path = self.image_path
-        self.set_busy(True, "Decoding…")
+        self.set_busy(True, "Decoding\u2026")
         thread = threading.Thread(
             target=self.decode_worker,
             args=(image, password, image_path, carrier),
@@ -308,7 +312,7 @@ class DecodeTab(ctk.CTkFrame):
         self.set_busy(False, "Decode complete.")
         # Seal badge
         if result.get("_seal_verified"):
-            self._notify_status("✓ Seal verified — image untampered")
+            self._notify_status("\u2713 Seal verified \u2014 image untampered")
         # Self-destruct warning
         rtype = result.get("type", "")
         if "self_destruct" in rtype:
@@ -357,18 +361,17 @@ class DecodeTab(ctk.CTkFrame):
         if not image_path or not os.path.exists(image_path):
             return
         dialog = ctk.CTkToplevel(self)
-        dialog.title("⚠ SELF-DESTRUCT")
+        dialog.title("\u26a0 SELF-DESTRUCT")
         dialog.geometry("440x220")
         dialog.configure(fg_color=COLORS["background"])
         dialog.transient(self)
         dialog.grab_set()
         dialog.lift()
-        ReusableWidgets.label(dialog, "⚠  SELF-DESTRUCT MODE", size=16, weight="bold").pack(
+        ReusableWidgets.label(dialog, "\u26a0 SELF-DESTRUCT MODE", size=16, weight="bold").pack(
             padx=20, pady=(20, 8))
         ReusableWidgets.label(
             dialog,
-            "This message will be erased from the image after you close this dialog.
-"
+            "This message will be erased from the image after you close this dialog.\n"
             "Save or copy the content NOW before closing.",
             size=12, muted=True).pack(padx=20, pady=(0, 14))
 
@@ -377,7 +380,7 @@ class DecodeTab(ctk.CTkFrame):
                 img = Image.open(image_path)
                 erased = LSBEngine.erase(img)
                 erased.save(image_path, "PNG")
-                self._notify_status("✓ Image erased — hidden data removed")
+                self._notify_status("\u2713 Image erased \u2014 hidden data removed")
             except Exception as exc:
                 self._notify_status(f"Erase failed: {exc}")
             dialog.destroy()
