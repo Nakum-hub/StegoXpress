@@ -1,6 +1,5 @@
 import os
 
-
 IMAGE_EXTENSIONS = {".png", ".jpg", ".jpeg"}
 
 
