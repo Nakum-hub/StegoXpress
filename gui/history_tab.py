@@ -7,9 +7,9 @@ from gui.widgets import COLORS, ReusableWidgets, inter, mono
 
 class HistoryTab(ctk.CTkFrame):
     ICONS = {
-        "encode": "🔒",
-        "decode": "🔓",
-        "send": "✉",
+        "encode": "\U0001f512",
+        "decode": "\U0001f513",
+        "send": "\u2709",
     }
 
     def __init__(self, parent):
@@ -90,7 +90,7 @@ class HistoryTab(ctk.CTkFrame):
         card.grid(row=index, column=0, sticky="ew", pady=(0, 10))
         card.grid_columnconfigure(1, weight=1)
 
-        icon = self.ICONS.get(entry["op_type"], "•")
+        icon = self.ICONS.get(entry["op_type"], "\u2022")
         ctk.CTkLabel(
             card,
             text=icon,
@@ -114,13 +114,13 @@ class HistoryTab(ctk.CTkFrame):
             pady=(2, 2),
         )
 
-        result_text = "✓ Success" if entry["success"] else "✗ Failed"
+        result_text = "\u2713 Success" if entry["success"] else "\u2717 Failed"
         if not entry["success"] and entry.get("reason"):
             result_text = f"{result_text}: {entry['reason']}"
         result_color = COLORS["accent"] if entry["success"] else COLORS["error"]
         ctk.CTkLabel(
             card,
-            text=f"{result_text} · {entry['duration_ms']:.0f} ms",
+            text=f"{result_text} \u00b7 {entry['duration_ms']:.0f} ms",
             text_color=result_color,
             font=inter(12, "bold"),
         ).grid(row=2, column=1, sticky="w", padx=(0, 12), pady=(0, 12))
