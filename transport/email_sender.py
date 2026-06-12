@@ -1,5 +1,6 @@
 import os
 import smtplib
+import ssl
 from email.message import EmailMessage
 
 
@@ -79,7 +80,11 @@ class EmailSender:
         server = smtplib.SMTP(self.host, self.port, timeout=15)
         server.ehlo()
         if self.tls:
-            server.starttls()
+            # v2 hardening (audit V9): explicit, modern SSL context with
+            # certificate verification and hostname checking enforced.
+            context = ssl.create_default_context()
+            context.minimum_version = ssl.TLSVersion.TLSv1_2
+            server.starttls(context=context)
             server.ehlo()
         return server
 
