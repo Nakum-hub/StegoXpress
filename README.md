@@ -1,142 +1,89 @@
-# StegoXpress ◈
+<p align="center">
+  <img src="logo.png" alt="StegoXpress" width="160"/>
+</p>
 
-![CI](https://github.com/Nakum-hub/StegoXpress/actions/workflows/tests.yml/badge.svg)
-![Python](https://img.shields.io/badge/python-3.10%2B-blue)
-![License](https://img.shields.io/badge/license-MIT-green)
-![Tests](https://img.shields.io/badge/tests-77%20passed-brightgreen)
+<h1 align="center">StegoXpress</h1>
 
-**Hide encrypted secrets inside images, audio, and PNG metadata.**
-The only Python steganography tool with dual-password hidden volumes,
-multi-carrier support, N-of-K secret sharing, and real-time steganalysis scoring.
+<p align="center"><b>Hide AES-256-GCM-encrypted secrets inside ordinary images, WAV audio, and PNG metadata.</b><br/>
+Dual-password decoy vaults &middot; N-of-K secret sharing &middot; tamper-evident seals &middot; built-in steganalysis scoring.</p>
 
 ---
 
-## What Makes This Different
+## Why StegoXpress
 
-| Feature | StegoXpress ◈ | Other tools |
-|---|:---:|:---:|
-| Dual-password hidden volumes (StegoVault) | ✅ | ❌ |
-| N-of-K Shamir secret sharing (StegoShield) | ✅ | ❌ |
-| Audio (WAV) carrier | ✅ | Rarely |
-| PNG metadata carrier (zero pixel change) | ✅ | ❌ |
-| HMAC tamper-proof seal | ✅ | ❌ |
-| Self-destruct after decode | ✅ | ❌ |
-| Live RS steganalysis score | ✅ | ❌ |
-| Entropy heatmap | ✅ | ❌ |
-| Adaptive LSB (high-entropy pixels only) | ✅ | ❌ |
-| CLI + GUI | ✅ | Rarely |
-| Password-based (no raw key transmitted) | ✅ | Rarely |
+Most steganography tools just flip pixel bits. StegoXpress encrypts **first** (AES-256-GCM, salted PBKDF2 with 600,000 iterations) and hides **second**, so even if the hidden data is found, it is useless without the password. On top of that core, it adds features normally found only in research tools:
 
----
-
-## Features
-
-### 🔒 Core
-- **AES-256-GCM** encryption with PBKDF2-HMAC-SHA256 (480,000 iterations)
-- **LSB steganography** — length-prefixed, handles text and any file type
-- **Adaptive LSB** — embeds only in high-entropy regions to reduce detectability
-
-### 🔐 StegoVault
-Embed a **decoy** AND a **real** message in one image.
-- Password A → decoy message (what you show under pressure)
-- Password B → real message (the actual secret)
-- No structural evidence that a second message exists
-
-### 🛡 StegoShield
-Split one secret across **N images**. Any **K** images reconstruct it.
-- Uses Shamir's Secret Sharing over GF(257)
-- Ideal for teams — no single person can decode alone
-
-### 🎵 MultiCarrier
-- **Image LSB** — 1 bit per RGB channel, PNG output
-- **Audio WAV** — LSB of 16-bit PCM samples, WAV output
-- **PNG Metadata** — private "stXp" chunk; zero pixel modification
-
-### 🔏 StegoSeal & Self-Destruct
-- **Seal** — HMAC-SHA256 integrity check; decoding fails if image modified
-- **Self-Destruct** — LSB layer zeroed after first successful decode
-
-### 📊 Analysis Tools
-- **Entropy Heatmap** — visual overlay of safe pixel zones (blue→red gradient)
-- **Steganalysis Score** — RS-analysis detectability: Low / Medium / High Risk
-
----
+| Feature | What it does |
+|---|---|
+| 🖼 **Multi-carrier** | Image LSB, adaptive LSB (high-entropy regions), WAV audio, PNG metadata chunk |
+| 🔐 **StegoVault** | Two passwords: one reveals a decoy message, the other reveals the real one |
+| 🛡 **StegoShield** | Splits a secret across N images; any K of them reconstruct it (Shamir, GF(2^8)) |
+| 📜 **Tamper seal** | HMAC-SHA256 seal (salted PBKDF2 key) proves the payload was not modified |
+| 🔥 **Local burn-after-read** | Optionally erases the LSB plane of the working copy after first decode |
+| 📊 **Steganalysis score** | Estimates how detectable your stego image is before you send it |
+| 🌡 **Entropy heatmap** | Visualizes where data is hidden / where it is safest to hide |
 
 ## Install
 
 ```bash
+git clone https://github.com/Nakum-hub/StegoXpress.git
+cd StegoXpress
 pip install -r requirements.txt
 ```
 
-## Run GUI
+Python 3.10+ required. For development: `pip install -e ".[dev]"`
+
+## Usage
+
+### GUI
 
 ```bash
 python main.py
 ```
 
-## CLI
+A dark-themed desktop app opens with six tabs: **Encode**, **Decode**, **Send** (email the stego image), **Vault**, **Shield**, and **History**.
+
+### CLI
 
 ```bash
-# Hide text
-python main.py encode --image cover.png --message "secret text" --password p --output out.png
+# Hide a message (password is read from an environment variable, never shell history)
+export STEGO_PASSWORD='my strong passphrase'
+python main.py encode --image cover.png --text "meet at noon" --output secret.png
 
-# Hide a file
-python main.py encode --image cover.png --file secret.pdf --password p --output out.png
+# Hide a file, sealed against tampering
+python main.py encode --image cover.png --file plans.pdf --seal --output secret.png
 
-# Decode
-python main.py decode --image out.png --password p
+# Reveal
+python main.py decode --image secret.png
 ```
 
-## Run Tests
+Exit codes: `0` success, `1` wrong password / corrupt data, `2` bad arguments, `3` I/O error — script-friendly.
+
+## Honest security model (read this)
+
+StegoXpress is built to be honest about what it can and cannot do. Full details in [SECURITY.md](SECURITY.md).
+
+**It protects against:** casual observers; recovery of the secret without the password (AES-256-GCM); silent tampering (authenticated encryption + seals).
+
+**It does NOT protect against:** statistical steganalysis of large payloads (adaptive mode reduces, never eliminates, detectability); a determined forensic analyst examining vault images (hidden-volume deniability is statistical, not absolute); copies you no longer control ("burn-after-read" only erases the local working copy); lossy re-encoding (JPEG/screenshots destroy payloads — use PNG); a compromised endpoint.
+
+## Quality
+
+- CI on Python 3.10–3.12: ruff, mypy, pytest with coverage, pip-audit
+- End-to-end test suites covering crypto, Shamir, adaptive LSB determinism, seals, vault, shield, audio and PNG-chunk carriers, plus fuzzing of all untrusted parsers
+- Versioned, authenticated on-disk format with backward-compatible v1 decryption
+
+## Build a standalone executable
 
 ```bash
-python -m pytest tests/ -v
-```
-
-## Build EXE (Windows)
-
-```bash
+pip install pyinstaller
 pyinstaller StegoXpress.spec
 ```
 
----
-
-## Project Structure
-
-```
-core/
-  lsb_engine.py        Standard + adaptive LSB, heatmap, steganalysis
-  crypto_engine.py     AES-256-GCM + PBKDF2 key derivation
-  file_packer.py       Binary payload format (text/file/vault/sealed/self-destruct)
-  vault_engine.py      Dual-password hidden volumes
-  audio_engine.py      WAV LSB steganography
-  png_chunk_engine.py  PNG ancillary chunk steganography
-  shamir_engine.py     Shamir's Secret Sharing over GF(257)
-  shield_engine.py     N-of-K multi-image secret sharing
-gui/
-  app.py               Main window + 6 tabs
-  encode_tab.py        Encode UI (carrier, heatmap, seal, adaptive toggles)
-  decode_tab.py        Decode UI (carrier, seal verification, self-destruct)
-  vault_tab.py         StegoVault UI
-  shield_tab.py        StegoShield UI
-  send_tab.py          Secure email (image only, no key in body)
-  history_tab.py       Session history
-  widgets.py           Design system + reusable widgets
-transport/
-  email_sender.py      Multi-provider SMTP
-  key_manager.py       Password strength + QR hint
-utils/
-  config.py            Persistent settings
-  logger.py            Rotating file log
-tests/                 77 tests across all modules
-main.py                CLI + GUI entry point
-```
-
-## Security
-
-See [SECURITY.md](SECURITY.md) for the full security model, known limitations,
-and vulnerability reporting process.
-
 ## License
 
-MIT — see [LICENSE](LICENSE)
+MIT — see [LICENSE](LICENSE).
+
+## Disclaimer
+
+This tool is for lawful use: protecting your own data, research, and education. You are responsible for complying with the laws of your jurisdiction.
