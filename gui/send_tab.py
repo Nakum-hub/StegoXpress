@@ -92,7 +92,7 @@ class SendTab(ctk.CTkFrame):
 
         self.sender_entry = ReusableWidgets.entry(left, "Sender email", width=420)
         self.sender_entry.grid(row=7, column=0, columnspan=2, sticky="ew", padx=20, pady=(0, 10))
-        self.password_entry = ReusableWidgets.entry(left, "App password", width=420, show="•")
+        self.password_entry = ReusableWidgets.entry(left, "App password", width=420, show="\u2022")
         self.password_entry.grid(row=8, column=0, columnspan=2, sticky="ew", padx=20, pady=(0, 12))
 
         ReusableWidgets.ghost_button(
@@ -223,7 +223,7 @@ class SendTab(ctk.CTkFrame):
         provider = Config.get("default_provider")
         if provider:
             self.provider_segment.set(provider.title())
-            self.on_provider_change()
+        self.on_provider_change()
 
         if Config.get("remember_sender_email"):
             self.sender_entry.delete(0, "end")
@@ -249,10 +249,10 @@ class SendTab(ctk.CTkFrame):
     def test_connection_worker(self, sender, username, password):
         try:
             ok = sender.test_connection(username, password)
-            message = "✓ Connected" if ok else "✗ Login failed"
+            message = "\u2713 Connected" if ok else "\u2717 Login failed"
             self.ui_queue.put((self.show_test_result, (ok, message)))
         except Exception as exc:
-            self.ui_queue.put((self.show_test_result, (False, f"✗ {exc}")))
+            self.ui_queue.put((self.show_test_result, (False, f"\u2717 {exc}")))
 
     def start_send(self):
         try:
