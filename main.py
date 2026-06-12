@@ -11,7 +11,6 @@ from core.file_packer import FilePacker
 from core.lsb_engine import LSBEngine
 from utils.logger import StegoLogger
 
-
 EXIT_SUCCESS = 0
 EXIT_WRONG_PASSWORD = 1
 EXIT_CAPACITY = 2
@@ -90,12 +89,10 @@ def cli_encode(args):
         duration_ms = elapsed_ms(start)
         reason = str(exc)
         log_operation(logger, "encode", image, payload_size, False, reason, duration_ms)
-        if "Payload too large" in reason:
-            print("Status: failed")
-            print(f"Reason: {reason}")
-            return EXIT_CAPACITY
         print("Status: failed")
         print(f"Reason: {reason}")
+        if "too large" in reason.lower():
+            return EXIT_CAPACITY
         return EXIT_WRONG_PASSWORD
     except FileNotFoundError as exc:
         duration_ms = elapsed_ms(start)
@@ -206,16 +203,23 @@ def log_operation(logger, operation, image, payload_size, success, reason, durat
 
 def run_gui():
     import customtkinter
+
     from gui.app import StegoXpressApp
 
     customtkinter.set_appearance_mode("dark")
     root = customtkinter.CTk()
-    app = StegoXpressApp(root)
+    StegoXpressApp(root)
     root.mainloop()
 
 
-if __name__ == "__main__":
-    if len(sys.argv) > 1:
-        sys.exit(run_cli(sys.argv[1:]))
-
+def main(argv=None):
+    """Entry point: CLI when arguments are given, GUI otherwise."""
+    argv = sys.argv[1:] if argv is None else argv
+    if argv:
+        return run_cli(argv)
     run_gui()
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
