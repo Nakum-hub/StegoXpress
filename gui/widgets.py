@@ -1,18 +1,17 @@
 import customtkinter as ctk
 from PIL import Image
 
-
 COLORS = {
-    "background":   "#080c10",
-    "surface":      "#0e1318",
-    "card":         "#141b22",
-    "accent":       "#00ffe5",
-    "accent_dim":   "#00ccb8",
+    "background": "#080c10",
+    "surface": "#0e1318",
+    "card": "#141b22",
+    "accent": "#00ffe5",
+    "accent_dim": "#00ccb8",
     "text_primary": "#e8e8e8",
-    "text_muted":   "#888888",
-    "error":        "#ff5252",
-    "warning":      "#ffab40",
-    "border":       "#1e2d3d",
+    "text_muted": "#888888",
+    "error": "#ff5252",
+    "warning": "#ffab40",
+    "border": "#1e2d3d",
 }
 
 
@@ -202,7 +201,7 @@ class ReusableWidgets:
             img.thumbnail((size, size), Image.LANCZOS)
             ctk_img = ctk.CTkImage(light_image=img, dark_image=img, size=img.size)
             label_widget.configure(image=ctk_img, text="")
-            label_widget._ctk_image = ctk_img   # prevent GC
+            label_widget._ctk_image = ctk_img  # prevent GC
         except Exception as exc:
             label_widget.configure(text=f"Error: {exc}", image=None)
 
