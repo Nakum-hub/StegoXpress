@@ -82,7 +82,11 @@ pyinstaller StegoXpress.spec
 
 ## License
 
-MIT — see [LICENSE](LICENSE).
+Proprietary commercial software — Copyright (c) 2026 Nakum-hub. All rights reserved.
+
+StegoXpress v2.0.0 and later are distributed under the [StegoXpress Proprietary Software License](LICENSE). Purchase of a license grants personal / internal business use; redistribution and resale are not permitted. For commercial, OEM, or source-code licensing, contact the author via [GitHub](https://github.com/Nakum-hub).
+
+*(Versions released before 12 June 2026 remain available under the MIT License that applied to them at the time.)*
 
 ## Disclaimer
 
