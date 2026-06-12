@@ -2,13 +2,19 @@
 PngChunkEngine — hide data in a private PNG ancillary chunk ("stXp").
 The image renders identically in all viewers — the chunk is ignored by
 all standard PNG decoders. No pixel values are modified.
+
+SECURITY NOTE (audit V4): this carrier offers NO covertness against anyone
+who inspects the file's chunk list — the stXp chunk is plainly visible to
+tools like `pngcheck`. Confidentiality comes only from the payload being
+encrypted BEFORE embedding. All StegoXpress callers (CLI and GUI) pass
+CryptoEngine.encrypt(...) output into encode(); do the same in your own code.
 """
 import struct
 import zlib
 
 PNG_SIGNATURE = b"\x89PNG\r\n\x1a\n"
-CHUNK_TYPE    = b"stXp"       # private = lowercase first letter (ancillary)
-IEND_CHUNK    = b"\x00\x00\x00\x00IEND\xaeB`\x82"
+CHUNK_TYPE = b"stXp"  # private = lowercase first letter (ancillary)
+IEND_CHUNK = b"\x00\x00\x00\x00IEND\xaeB`\x82"
 
 
 class PngChunkEngine:
@@ -55,7 +61,7 @@ class PngChunkEngine:
             chunk_len = struct.unpack(">I", raw[pos:pos + 4])[0]
             chunk_type = raw[pos + 4:pos + 8]
             chunk_data = raw[pos + 8:pos + 8 + chunk_len]
-            chunk_crc  = struct.unpack(">I", raw[pos + 8 + chunk_len:pos + 12 + chunk_len])[0]
+            chunk_crc = struct.unpack(">I", raw[pos + 8 + chunk_len:pos + 12 + chunk_len])[0]
 
             if chunk_type == CHUNK_TYPE:
                 expected_crc = zlib.crc32(chunk_type + chunk_data) & 0xFFFFFFFF
