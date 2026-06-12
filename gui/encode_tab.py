@@ -28,11 +28,11 @@ class EncodeTab(ctk.CTkFrame):
         self.status_callback = None
         self.history_callback = None
         self.logger = StegoLogger.get()
-        self.image_path    = None
-        self.cover_image   = None
+        self.image_path = None
+        self.cover_image = None
         self.selected_file = None
-        self.audio_path    = None
-        self._heatmap_img  = None
+        self.audio_path = None
+        self._heatmap_img = None
         self.ui_queue = queue.Queue()
 
         self.grid_columnconfigure(0, weight=1)
@@ -54,7 +54,7 @@ class EncodeTab(ctk.CTkFrame):
         self.setup_drag_and_drop()
         self.after(100, self.process_ui_queue)
 
-    # ── Left column ───────────────────────────────────────────────────────────
+    # ── Left column ─────────────────────────────────────────────────────────────────────
 
     def _build_left_column(self):
         left = ReusableWidgets.card(self.content)
@@ -89,7 +89,7 @@ class EncodeTab(ctk.CTkFrame):
         self.audio_browse_frame.grid_columnconfigure(0, weight=1)
         ReusableWidgets.label(self.audio_browse_frame, "WAV AUDIO FILE", size=11, muted=True).grid(
             row=0, column=0, columnspan=2, sticky="w")
-        self.audio_entry = ReusableWidgets.entry(self.audio_browse_frame, "Select .wav file…")
+        self.audio_entry = ReusableWidgets.entry(self.audio_browse_frame, "Select .wav file\u2026")
         self.audio_entry.grid(row=1, column=0, sticky="ew", padx=(0, 6), pady=(4, 0))
         ReusableWidgets.ghost_button(
             self.audio_browse_frame, "Browse", self._browse_audio, width=70
@@ -105,7 +105,7 @@ class EncodeTab(ctk.CTkFrame):
         self.image_info = ReusableWidgets.label(left, "No image selected", muted=True)
         self.image_info.grid(row=6, column=0, sticky="w", padx=20, pady=(0, 18))
 
-    # ── Right column ──────────────────────────────────────────────────────────
+    # ── Right column ──────────────────────────────────────────────────────────────────
 
     def _build_right_column(self):
         right = ReusableWidgets.card(self.content)
@@ -129,7 +129,7 @@ class EncodeTab(ctk.CTkFrame):
         self.carrier_selector.set("Image (LSB)")
 
         self.carrier_note = ReusableWidgets.label(
-            right, "LSB into RGB pixels — stego image saved as PNG.", size=10, muted=True)
+            right, "LSB into RGB pixels \u2014 stego image saved as PNG.", size=10, muted=True)
         self.carrier_note.grid(row=2, column=0, columnspan=2, sticky="w", padx=20, pady=(0, 10))
 
         # PAYLOAD
@@ -158,20 +158,20 @@ class EncodeTab(ctk.CTkFrame):
         self.text_box.grid(row=5, column=0, columnspan=2, sticky="ew", padx=20, pady=(0, 16))
         self.text_box.bind("<KeyRelease>", lambda _: self.update_capacity_preview())
 
-        self.file_entry  = ReusableWidgets.entry(right, "Choose any file", width=330)
+        self.file_entry = ReusableWidgets.entry(right, "Choose any file", width=330)
         self.file_button = ReusableWidgets.ghost_button(right, "Browse File", self.browse_file, width=120)
 
         # ENCRYPTION
         self._section_header(right, "ENCRYPTION", 6)
         ReusableWidgets.label(right, "Password", muted=True).grid(
             row=7, column=0, columnspan=2, sticky="w", padx=20)
-        self.password_entry = ReusableWidgets.entry(right, "Password", show="•")
+        self.password_entry = ReusableWidgets.entry(right, "Password", show="\u2022")
         self.password_entry.grid(row=8, column=0, columnspan=2, sticky="ew", padx=20, pady=(4, 10))
         self.password_entry.bind("<KeyRelease>", lambda _: self.update_password_strength())
 
         ReusableWidgets.label(right, "Confirm Password", muted=True).grid(
             row=9, column=0, columnspan=2, sticky="w", padx=20)
-        self.confirm_entry = ReusableWidgets.entry(right, "Confirm password", show="•")
+        self.confirm_entry = ReusableWidgets.entry(right, "Confirm password", show="\u2022")
         self.confirm_entry.grid(row=10, column=0, columnspan=2, sticky="ew", padx=20, pady=(4, 10))
 
         self.password_strength = ReusableWidgets.progress_bar(right, width=400)
@@ -223,7 +223,7 @@ class EncodeTab(ctk.CTkFrame):
             right, "Choose Location", self.choose_output, width=150)
         choose.grid(row=15, column=1, sticky="e", padx=(0, 20), pady=(8, 18))
 
-    # ── Action row ────────────────────────────────────────────────────────────
+    # ── Action row ────────────────────────────────────────────────────────────────────
 
     def _build_action_row(self):
         action = ReusableWidgets.card(self.content, fg_color=COLORS["surface"])
@@ -258,20 +258,20 @@ class EncodeTab(ctk.CTkFrame):
         self.steg_score_bar.grid(row=3, column=0, sticky="w", padx=18, pady=(0, 14))
         self.success_card.grid_remove()
 
-    # ── Section header helper ─────────────────────────────────────────────────
+    # ── Section header helper ─────────────────────────────────────────────────────────
 
     def _section_header(self, parent, text, row):
         ReusableWidgets.label(parent, text, size=12, weight="bold").grid(
             row=row, column=0, columnspan=2,
             sticky="w", padx=20, pady=(14, 0))
 
-    # ── Carrier change ────────────────────────────────────────────────────────
+    # ── Carrier change ─────────────────────────────────────────────────────────────────
 
     def _on_carrier_change(self, value):
         notes = {
-            "Image (LSB)":   "LSB into RGB pixels — stego image saved as PNG.",
-            "Audio (WAV)":   "LSB into 16-bit PCM WAV samples — output saved as WAV.",
-            "PNG Metadata":  "Hidden in private PNG chunk — pixels visually unchanged. ~2 GB capacity.",
+            "Image (LSB)": "LSB into RGB pixels \u2014 stego image saved as PNG.",
+            "Audio (WAV)": "LSB into 16-bit PCM WAV samples \u2014 output saved as WAV.",
+            "PNG Metadata": "Hidden in private PNG chunk \u2014 pixels visually unchanged. ~2 GB capacity.",
         }
         self.carrier_note.configure(text=notes.get(value, ""))
         if value == "Audio (WAV)":
@@ -306,12 +306,12 @@ class EncodeTab(ctk.CTkFrame):
         except Exception as exc:
             self.audio_info.configure(text=f"Error: {exc}", text_color=COLORS["error"])
 
-    # ── Heatmap toggle ────────────────────────────────────────────────────────
+    # ── Heatmap toggle ─────────────────────────────────────────────────────────────────
 
     def _on_heatmap_toggle(self, value):
         if value == "Heatmap":
             if self._heatmap_img is None and self.cover_image:
-                self.preview.configure(text="Computing heatmap…")
+                self.preview.configure(text="Computing heatmap\u2026")
                 threading.Thread(target=self._compute_heatmap, daemon=True).start()
             elif self._heatmap_img:
                 self._show_preview_image(self._heatmap_img)
@@ -338,7 +338,7 @@ class EncodeTab(ctk.CTkFrame):
         except Exception:
             pass
 
-    # ── Image browse / drag-drop ──────────────────────────────────────────────
+    # ── Image browse / drag-drop ───────────────────────────────────────────────────────
 
     def on_payload_mode_change(self, _value=None):
         if self.payload_mode.get() == "Text":
@@ -349,9 +349,9 @@ class EncodeTab(ctk.CTkFrame):
         else:
             self.text_box.grid_remove()
             self.file_entry.grid(row=5, column=0, sticky="ew",
-                                  padx=(20, 10), pady=(0, 8))
+                                 padx=(20, 10), pady=(0, 8))
             self.file_button.grid(row=5, column=1, sticky="e",
-                                   padx=(0, 20), pady=(0, 8))
+                                  padx=(0, 20), pady=(0, 8))
         self.update_capacity_preview()
 
     def browse_image(self):
@@ -365,7 +365,7 @@ class EncodeTab(ctk.CTkFrame):
     def load_image_path(self, path):
         try:
             img = Image.open(path)
-            self.image_path  = path
+            self.image_path = path
             self.cover_image = img
             self._heatmap_img = None
             ReusableWidgets.load_preview(self.preview, path, 280)
@@ -375,7 +375,7 @@ class EncodeTab(ctk.CTkFrame):
             cap = LSBEngine.capacity_bytes(img)
             self.capacity.update(0, cap)
             self.image_info.configure(
-                text=f"{w}×{h} | {img.mode} | {format_bytes(cap)} capacity",
+                text=f"{w}\u00d7{h} | {img.mode} | {format_bytes(cap)} capacity",
                 text_color=COLORS["text_primary"])
             self.suggest_output_path(path)
             self.update_capacity_preview()
@@ -428,13 +428,18 @@ class EncodeTab(ctk.CTkFrame):
     def update_password_strength(self):
         pw = self.password_entry.get()
         score = 0
-        if len(pw) >= 8:  score += 1
-        if len(pw) >= 12: score += 1
-        if any(c.isupper() for c in pw) and any(c.islower() for c in pw): score += 1
-        if any(c.isdigit() for c in pw): score += 1
-        if any(c in "!@#$%^&*()_+-=[]{}|;:,.<>?" for c in pw): score += 1
-        colors = ["#ff5252", "#ff5252", "#ffab40", "#00e676", "#00ffe5"]
-        labels = ["Weak", "Weak", "Fair", "Good", "Strong"]
+        if len(pw) >= 8:
+            score += 1
+        if len(pw) >= 12:
+            score += 1
+        if any(c.isupper() for c in pw) and any(c.islower() for c in pw):
+            score += 1
+        if any(c.isdigit() for c in pw):
+            score += 1
+        if any(c in "!@#$%^&*()_+-=[]{}|;:,.<>?" for c in pw):
+            score += 1
+        colors = ["#ff5252", "#ff5252", "#ffab40", "#00e676", "#00ffe5", "#00ffe5"]
+        labels = ["Weak", "Weak", "Fair", "Good", "Strong", "Strong"]
         frac = score / 5
         self.password_strength.set(frac)
         self.password_strength.configure(progress_color=colors[score])
@@ -456,43 +461,50 @@ class EncodeTab(ctk.CTkFrame):
         except Exception:
             pass
 
-    # ── Encode ────────────────────────────────────────────────────────────────
+    # ── Encode ────────────────────────────────────────────────────────────────────────
 
     def start_encode(self):
         carrier = self.carrier_selector.get()
         password = self.password_entry.get()
-        confirm  = self.confirm_entry.get()
+        confirm = self.confirm_entry.get()
         output_path = self.output_entry.get().strip()
 
         if carrier == "Audio (WAV)":
             if not self.audio_path or not os.path.exists(self.audio_path):
-                self.fail_encode_validation("Select a WAV audio file first."); return
+                self.fail_encode_validation("Select a WAV audio file first.")
+                return
         else:
             if self.cover_image is None:
-                self.fail_encode_validation("Load a cover image first."); return
+                self.fail_encode_validation("Load a cover image first.")
+                return
 
         if not password:
-            self.fail_encode_validation("Enter a password."); return
+            self.fail_encode_validation("Enter a password.")
+            return
         if password != confirm:
-            self.fail_encode_validation("Passwords do not match."); return
+            self.fail_encode_validation("Passwords do not match.")
+            return
         if not output_path:
-            self.fail_encode_validation("Choose an output path."); return
+            self.fail_encode_validation("Choose an output path.")
+            return
 
         try:
             payload = self.build_payload()
         except (ValueError, OSError) as exc:
-            self.fail_encode_validation(str(exc)); return
+            self.fail_encode_validation(str(exc))
+            return
 
         if carrier == "Image (LSB)":
             cap = max(FilePacker.max_file_size_for_image(self.cover_image), 0)
             if cap < len(payload):
                 self.fail_encode_validation(
                     f"Image too small. Need {len(payload)/1024:.1f}kb, "
-                    f"have {cap/1024:.1f}kb."); return
+                    f"have {cap/1024:.1f}kb.")
+                return
 
         description = self.encode_description(output_path, len(payload))
-        image_copy  = self.cover_image.copy() if self.cover_image else None
-        self.set_busy(True, "Encoding payload…")
+        image_copy = self.cover_image.copy() if self.cover_image else None
+        self.set_busy(True, "Encoding payload\u2026")
         threading.Thread(
             target=self.encode_worker,
             args=(image_copy, payload, password, output_path,
@@ -501,10 +513,10 @@ class EncodeTab(ctk.CTkFrame):
         ).start()
 
     def build_payload(self):
-        seal     = self.seal_switch.get()
+        seal = self.seal_switch.get()
         destruct = self.destruct_switch.get()
         password = self.password_entry.get()
-        is_text  = self.payload_mode.get() == "Text"
+        is_text = self.payload_mode.get() == "Text"
 
         if is_text:
             msg = self.text_box.get("1.0", "end-1c")
@@ -574,7 +586,7 @@ class EncodeTab(ctk.CTkFrame):
             self.log_operation("encode", image, len(payload), False, reason, duration_ms)
             self.ui_queue.put((self.on_encode_failure, (reason, duration_ms, description)))
 
-    # ── UI queue ──────────────────────────────────────────────────────────────
+    # ── UI queue ──────────────────────────────────────────────────────────────────────────
 
     def process_ui_queue(self):
         while True:
@@ -595,11 +607,11 @@ class EncodeTab(ctk.CTkFrame):
 
         if steg_score is not None:
             if steg_score < 0.1:
-                sc, sl = COLORS["accent"],    f"Detectability: {steg_score:.2f} — Low Risk ✓"
+                sc, sl = COLORS["accent"], f"Detectability: {steg_score:.2f} \u2014 Low Risk \u2713"
             elif steg_score < 0.3:
-                sc, sl = COLORS["warning"],   f"Detectability: {steg_score:.2f} — Medium Risk"
+                sc, sl = COLORS["warning"], f"Detectability: {steg_score:.2f} \u2014 Medium Risk"
             else:
-                sc, sl = COLORS["error"],     f"Detectability: {steg_score:.2f} — High Risk (use larger image)"
+                sc, sl = COLORS["error"], f"Detectability: {steg_score:.2f} \u2014 High Risk (use larger image)"
             self.steg_score_label.configure(text=sl, text_color=sc)
             self.steg_score_bar.configure(progress_color=sc)
             self.steg_score_bar.set(min(steg_score, 1.0))
