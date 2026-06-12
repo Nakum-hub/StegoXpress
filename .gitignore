@@ -1,43 +1,28 @@
 # Python
 __pycache__/
 *.py[cod]
-*.pyo
-*.pyd
-dist/
-build/
-.eggs/
 *.egg-info/
-pip-selfcheck.json
-
-# PyInstaller (keep our spec, ignore generated ones)
-*.spec
-!StegoXpress.spec
-
-# Virtual environments
+.eggs/
+build/
+dist/
 .venv/
 venv/
 env/
-ENV/
 
-# Testing
+# Test / coverage
 .pytest_cache/
 .coverage
 htmlcov/
-coverage.xml
-nosetests.xml
+.mypy_cache/
+.ruff_cache/
 
-# Logs / user data
-*.log
-
-# IDE
+# OS / editor
+.DS_Store
 .idea/
 .vscode/
 *.swp
-*.swo
-.DS_Store
-Thumbs.db
 
-# Legacy v1 files
-steganography_app.py
-steganography_app.spec
-tool_info.html
+# StegoXpress — never commit secrets or generated carriers with payloads
+*.token
+*.key
+secrets/
