@@ -1,21 +1,75 @@
-MIT License
+StegoXpress Proprietary Software License
+Version 1.0 — Effective 12 June 2026
 
-Copyright (c) 2026 Nakum-hub
+Copyright (c) 2026 Nakum-hub (Naveen T S). All rights reserved.
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+IMPORTANT NOTICE ON VERSIONS
+  This license governs StegoXpress version 2.0.0 and every later version.
+  Versions released before 12 June 2026 were published under the MIT License,
+  and that MIT License continues to apply ONLY to those specific earlier
+  versions. It does not grant any rights to version 2.0.0 or later.
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+1. DEFINITIONS
+   "Software" means the StegoXpress application, including all source code,
+   object code, documentation, user interfaces, designs, logos, and assets
+   provided under this license.
+   "Licensor" means the copyright holder, Nakum-hub (Naveen T S).
+   "Licensee" means the individual or single organization that has lawfully
+   obtained the Software under this license.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+2. OWNERSHIP
+   The Software is the exclusive intellectual property of the Licensor. It is
+   licensed, not sold. No title or ownership is transferred to the Licensee.
+   All rights not expressly granted are reserved by the Licensor.
+
+3. GRANT OF LICENSE
+   Subject to full payment of the applicable license fee and to continued
+   compliance with this license, the Licensor grants the Licensee a
+   non-exclusive, non-transferable, non-sublicensable, revocable license to:
+     (a) install and run the Software for the Licensee's own personal use or
+         internal business use; and
+     (b) modify the Software solely for the Licensee's own internal use.
+
+4. RESTRICTIONS
+   Unless the Licensee has obtained prior written permission from the
+   Licensor, the Licensee shall NOT:
+     (a) sell, resell, redistribute, rent, lease, lend, host as a service, or
+         otherwise make the Software available to any third party;
+     (b) publish, post, or disclose the Software's source code, in whole or in
+         part, in any public repository, website, forum, or other medium;
+     (c) sublicense, assign, or transfer this license or any rights under it;
+     (d) use the Software, or any portion of it, to create or operate a
+         product or service that competes with the Software;
+     (e) remove, obscure, or alter any copyright, trademark, license, or
+         other proprietary notice contained in the Software.
+
+5. NO WARRANTY
+   THE SOFTWARE IS PROVIDED "AS IS" AND "AS AVAILABLE", WITHOUT WARRANTY OF
+   ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+   OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, TITLE, AND
+   NONINFRINGEMENT. THE LICENSEE BEARS THE ENTIRE RISK AS TO THE QUALITY AND
+   PERFORMANCE OF THE SOFTWARE.
+
+6. LIMITATION OF LIABILITY
+   IN NO EVENT SHALL THE LICENSOR BE LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER
+   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT, OR OTHERWISE, ARISING
+   FROM, OUT OF, OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+   DEALINGS IN THE SOFTWARE, INCLUDING ANY LOSS OF DATA OR LOSS OF SECRETS
+   PROTECTED USING THE SOFTWARE.
+
+7. LAWFUL USE
+   The Software is a privacy and data-protection tool. The Licensee agrees to
+   use the Software only for lawful purposes and in full compliance with all
+   applicable laws, regulations, and export controls in the Licensee's
+   jurisdiction. The Licensee is solely responsible for such compliance.
+
+8. TERMINATION
+   This license terminates automatically, without notice, if the Licensee
+   breaches any term. Upon termination, the Licensee must immediately cease
+   all use of the Software and destroy all copies in their possession or
+   control. Sections 2, 5, 6, and 7 survive termination.
+
+9. COMMERCIAL & REDISTRIBUTION LICENSING
+   Rights beyond those granted above (including resale, redistribution, OEM,
+   white-label, or source-code licensing) are available only by separate
+   written agreement. Contact the Licensor via https://github.com/Nakum-hub
