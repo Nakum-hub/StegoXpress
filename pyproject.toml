@@ -8,9 +8,12 @@ version = "2.0.0"
 description = "Encrypted steganography toolkit: AES-256-GCM, hidden vaults, N-of-K secret sharing, and tamper-proof seals."
 readme = "README.md"
 requires-python = ">=3.10"
-license = { text = "MIT" }
-authors = [{ name = "StegoXpress" }]
+license = { file = "LICENSE" }
+authors = [{ name = "Nakum-hub" }]
 keywords = ["steganography", "encryption", "security", "lsb", "aes", "shamir"]
+classifiers = [
+    "License :: Other/Proprietary License",
+]
 dependencies = [
     "Pillow>=10.0",
     "numpy>=1.24",
