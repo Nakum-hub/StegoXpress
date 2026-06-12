@@ -1,64 +1,64 @@
 # Changelog
 
-## [2.0.0] — 2025
+All notable changes to this project are documented here.
+The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
-### Added — Unique Features (no free tool has these)
+## [2.0.0] - 2026-06-12
 
-- **StegoVault** (`core/vault_engine.py`, `gui/vault_tab.py`)
-  Dual-password hidden volumes. Decoy password reveals planted harmless content;
-  real password reveals the actual secret. Adversary who extracts one password
-  never knows a second message exists.
+### Security (breaking & high-priority fixes)
 
-- **StegoShield** (`core/shamir_engine.py`, `core/shield_engine.py`, `gui/shield_tab.py`)
-  Shamir's Secret Sharing across N images. Any K of N images reconstruct the secret.
-  No single image holder can decode alone.
+- **CRITICAL — removed plaintext-password QR sharing (V1).** `KeyManager`
+  previously QR-encoded the raw password into a temp file with `delete=False`,
+  leaving the cleartext secret on disk permanently. Removed entirely and
+  replaced with `generate_one_time_token()`, which produces a high-entropy token
+  that is never the password.
+- **CRITICAL — salted KDF for seals (V2).** Seal keys were derived with bare,
+  unsalted SHA-256 of the password, enabling rainbow-table/precomputation
+  attacks. Now uses salted PBKDF2-HMAC-SHA256 (600k iterations); the 16-byte
+  salt is stored with the MAC.
+- **Authenticated header (crypto).** The crypto bundle now carries a magic +
+  version byte and binds the full header into AES-GCM as AAD. Bundle layout:
+  `SXP2 | version | salt(16) | nonce(12) | ct+tag`. Legacy v1 bundles still
+  decrypt.
+- **KDF hardening.** PBKDF2 iterations raised from 480,000 to 600,000.
 
-- **MultiCarrier** (`core/audio_engine.py`, `core/png_chunk_engine.py`)
-  - **WAV Audio**: LSB into 16-bit PCM samples. Same password workflow, audio output.
-  - **PNG Metadata**: Payload hidden in a private "stXp" chunk. Image pixels are
-    visually and numerically identical; ~2 GB capacity.
+### Fixed
 
-- **StegoSeal** (`core/file_packer.py` — SEALED_TYPE)
-  HMAC-SHA256 tamper-proof seal. Decoding fails if even one pixel was changed
-  after encoding.
+- **Adaptive LSB corruption (V3).** Entropy is now computed on LSB-masked pixel
+  values, so the high-entropy pixel set is identical before and after embedding.
+  Adaptive encode/decode is now deterministic (validated across 25 randomized
+  roundtrips). Adaptive magic bumped to `ADA2`.
+- **Shamir modulo bias (V7).** Replaced GF(257) arithmetic (which leaked/relied
+  on a 2-byte-per-value workaround and introduced bias) with standard GF(2^8)
+  using log/antilog tables. Shares are now exactly the secret length (half the
+  previous size).
 
-- **Self-Destruct Mode** (`core/file_packer.py` — SELF_DESTRUCT_TYPE, `core/lsb_engine.py` — erase)
-  LSB layer is zeroed after first successful decode. Image becomes undecodable
-  on all subsequent attempts.
+### Performance
 
-- **Entropy Heatmap** (`core/lsb_engine.py` — generate_heatmap, `gui/encode_tab.py`)
-  Visual overlay showing which pixels are statistically safe for embedding.
-  Blue = flat/low entropy; red = high entropy (safest).
+- **Vectorized entropy & heatmap (V8).** Per-pixel Python loops replaced with
+  NumPy-vectorized sliding-window entropy, dramatically speeding up adaptive
+  mode and heatmap generation on large images.
 
-- **Steganalysis Score** (`core/lsb_engine.py` — steganalysis_score, `gui/encode_tab.py`)
-  RS-analysis score displayed after every encode. Tells the user how detectable
-  the embedding is (Low / Medium / High Risk).
+### Hardening
 
-- **Adaptive LSB** (`core/lsb_engine.py` — encode_adaptive / decode_adaptive)
-  Embeds only into high-entropy pixels (natural textures, edges). Reduces
-  RS-analysis detectability vs sequential embedding.
+- **Decompression-bomb guard (V6).** `Image.MAX_IMAGE_PIXELS` capped to ~64MP to
+  prevent denial-of-service via maliciously crafted images.
 
-### Added — Infrastructure
+### Added
 
-- Full modular architecture: `core/`, `gui/`, `transport/`, `utils/`
-- AES-256-GCM + PBKDF2 (480,000 iterations) — password-derived, no raw key transmitted
-- CustomTkinter GUI with 6 tabs: Encode, Decode, Send, Vault, Shield, History
-- Drag-and-drop image loading
-- Persistent settings at `~/.stegoxpress/config.json`
-- Rotating logs at `~/.stegoxpress/logs/stegoxpress.log`
-- Headless CLI: `python main.py encode/decode`
-- GitHub Actions CI (Python 3.10 / 3.11 / 3.12, Ubuntu + Windows)
-- 77 automated tests
+- `pyproject.toml` with pinned dependencies and `dev`/`qr` extras.
+- GitHub Actions CI: ruff, mypy, pytest+coverage across Python 3.10–3.12, and a
+  `pip-audit` dependency-vulnerability job.
+- `tests/test_upgrade.py` validating crypto, Shamir, LSB (standard + adaptive),
+  seals, vault, and shield end-to-end.
+- Honest, expanded `SECURITY.md` threat model.
 
-### Fixed (from v1.0)
+### Documentation
 
-- Fatal indentation bug — `embed_message` loop was orphaned code, never executed
-- Broken decryption — no end delimiter; decoder read entire image as ciphertext
-- Security inversion — encryption key was sent in email body plaintext
-- Crash on RGBA images — alpha channel not handled before LSB operations
-- Output path clobbered input when filenames matched
-- Missing `self.cover_image_path` and `self.hidden_file_path` attributes
+- Softened overstated guarantees around hidden-volume deniability (V4) and
+  self-destruct (V5) to match real capabilities.
 
-## [1.0.0] — December 2024
+## [1.0.0] - 2026-06-10
 
-Initial prototype (internship project). Single-file monolithic tkinter app.
+- Initial release: LSB steganography, AES-256-GCM encryption, vaults, shields,
+  seals, self-destruct, PNG chunk embedding, GUI.
