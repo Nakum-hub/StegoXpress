@@ -18,15 +18,15 @@ from gui.widgets import COLORS, ReusableWidgets as W
 class ShieldTab(ctk.CTkFrame):
     def __init__(self, parent, status_callback=None, history_callback=None):
         super().__init__(parent, fg_color="transparent")
-        self._status_cb  = status_callback  or (lambda *a, **k: None)
+        self._status_cb = status_callback or (lambda *a, **k: None)
         self._history_cb = history_callback or (lambda *a, **k: None)
-        self._ui_queue   = queue.Queue()
+        self._ui_queue = queue.Queue()
         self._cover_paths: list = []
         self._recon_paths: list = []
         self._build_ui()
         self._poll_queue()
 
-    # ── Build ────────────────────────────────────────────────────────────────
+    # ── Build ────────────────────────────────────────────────────────
 
     def _build_ui(self):
         self.columnconfigure(0, weight=1)
@@ -50,23 +50,23 @@ class ShieldTab(ctk.CTkFrame):
         self._n_label = W.label(nk_left, "N = 5", size=13)
         self._n_label.pack(anchor="w")
         self._n_slider = ctk.CTkSlider(nk_left, from_=2, to=10, number_of_steps=8,
-                                        fg_color=COLORS["border"],
-                                        progress_color=COLORS["accent"],
-                                        button_color=COLORS["accent"],
-                                        command=self._on_n_change)
+                                       fg_color=COLORS["border"],
+                                       progress_color=COLORS["accent"],
+                                       button_color=COLORS["accent"],
+                                       command=self._on_n_change)
         self._n_slider.set(5)
         self._n_slider.pack(fill="x", pady=(4, 0))
 
         nk_right = ctk.CTkFrame(slider_frame, fg_color="transparent")
         nk_right.grid(row=0, column=1, sticky="ew")
         W.label(nk_right, "Minimum shares to decode (K):", size=12).pack(anchor="w")
-        self._k_label = W.label(nk_right, "K = 3 — any 3 of 5 images reconstruct the secret", size=12)
+        self._k_label = W.label(nk_right, "K = 3 \u2014 any 3 of 5 images reconstruct the secret", size=12)
         self._k_label.pack(anchor="w")
         self._k_slider = ctk.CTkSlider(nk_right, from_=2, to=5, number_of_steps=3,
-                                        fg_color=COLORS["border"],
-                                        progress_color=COLORS["accent_dim"],
-                                        button_color=COLORS["accent_dim"],
-                                        command=self._on_k_change)
+                                       fg_color=COLORS["border"],
+                                       progress_color=COLORS["accent_dim"],
+                                       button_color=COLORS["accent_dim"],
+                                       command=self._on_k_change)
         self._k_slider.set(3)
         self._k_slider.pack(fill="x", pady=(4, 0))
 
@@ -82,8 +82,8 @@ class ShieldTab(ctk.CTkFrame):
         W.label(enc_card, "SECRET MESSAGE", size=11, muted=True).grid(
             row=4, column=0, columnspan=4, padx=14, pady=(4, 4), sticky="w")
         self._payload_box = ctk.CTkTextbox(enc_card, height=70, fg_color=COLORS["surface"],
-                                            text_color=COLORS["text_primary"],
-                                            border_color=COLORS["border"], border_width=1)
+                                           text_color=COLORS["text_primary"],
+                                           border_color=COLORS["border"], border_width=1)
         self._payload_box.grid(row=5, column=0, columnspan=4, padx=14, pady=(0, 8), sticky="ew")
 
         # Password + output + action
@@ -92,7 +92,7 @@ class ShieldTab(ctk.CTkFrame):
         pw_row.columnconfigure((0, 1, 2, 3), weight=1)
 
         W.label(pw_row, "Password:", size=12).grid(row=0, column=0, padx=(0, 6), sticky="e")
-        self._enc_pass = W.entry(pw_row, "Encryption password", show="•")
+        self._enc_pass = W.entry(pw_row, "Encryption password", show="\u2022")
         self._enc_pass.grid(row=0, column=1, padx=6, sticky="ew")
         W.label(pw_row, "Output dir:", size=12).grid(row=0, column=2, padx=6, sticky="e")
         self._out_dir = W.entry(pw_row, "Output directory")
@@ -122,18 +122,18 @@ class ShieldTab(ctk.CTkFrame):
         rec_pw_row.grid(row=3, column=0, padx=14, pady=(4, 8), sticky="ew")
         rec_pw_row.columnconfigure(1, weight=1)
         W.label(rec_pw_row, "Password:", size=12).grid(row=0, column=0, padx=(0, 8))
-        self._rec_pass = W.entry(rec_pw_row, "Decryption password", show="•")
+        self._rec_pass = W.entry(rec_pw_row, "Decryption password", show="\u2022")
         self._rec_pass.grid(row=0, column=1, sticky="ew")
         W.primary_button(rec_pw_row, "RECONSTRUCT", self._start_reconstruct, width=160).grid(
             row=0, column=2, padx=(12, 0))
 
         self._rec_result = ctk.CTkTextbox(rec_card, height=80, state="disabled",
-                                           fg_color=COLORS["surface"],
-                                           text_color=COLORS["text_primary"],
-                                           border_color=COLORS["border"], border_width=1)
+                                          fg_color=COLORS["surface"],
+                                          text_color=COLORS["text_primary"],
+                                          border_color=COLORS["border"], border_width=1)
         self._rec_result.grid(row=4, column=0, padx=14, pady=(0, 12), sticky="ew")
 
-    # ── Dynamic rows ─────────────────────────────────────────────────────────
+    # ── Dynamic rows ─────────────────────────────────────────────────────
 
     def _refresh_cover_rows(self, n):
         for w in self._covers_frame.winfo_children():
@@ -146,9 +146,9 @@ class ShieldTab(ctk.CTkFrame):
             lbl = W.label(col, f"Share {i + 1}", size=11, muted=True)
             lbl.pack()
             prev = ctk.CTkLabel(col, text="No image", width=80, height=80,
-                                 fg_color=COLORS["card"],
-                                 text_color=COLORS["text_muted"],
-                                 corner_radius=6)
+                                fg_color=COLORS["card"],
+                                text_color=COLORS["text_muted"],
+                                corner_radius=6)
             prev.pack(pady=2)
             W.ghost_button(col, "Browse", lambda idx=i, p=prev: self._browse_cover(idx, p),
                            width=80).pack(pady=2)
@@ -180,7 +180,8 @@ class ShieldTab(ctk.CTkFrame):
             )
             if p:
                 self._recon_paths[i] = p
-                e.delete(0, "end"); e.insert(0, p)
+                e.delete(0, "end")
+                e.insert(0, p)
 
         W.ghost_button(row, "Browse", pick, width=70).grid(row=0, column=2)
 
@@ -190,7 +191,7 @@ class ShieldTab(ctk.CTkFrame):
             self._out_dir.delete(0, "end")
             self._out_dir.insert(0, d)
 
-    # ── Slider callbacks ──────────────────────────────────────────────────────
+    # ── Slider callbacks ─────────────────────────────────────────────────────────
 
     def _on_n_change(self, val):
         n = int(round(val))
@@ -201,16 +202,16 @@ class ShieldTab(ctk.CTkFrame):
             self._k_slider.set(n)
             k = n
         self._k_label.configure(
-            text=f"K = {k} — any {k} of {n} images reconstruct the secret")
+            text=f"K = {k} \u2014 any {k} of {n} images reconstruct the secret")
         self._refresh_cover_rows(n)
 
     def _on_k_change(self, val):
         k = int(round(val))
         n = int(round(self._n_slider.get()))
         self._k_label.configure(
-            text=f"K = {k} — any {k} of {n} images reconstruct the secret")
+            text=f"K = {k} \u2014 any {k} of {n} images reconstruct the secret")
 
-    # ── Encode / reconstruct workers ─────────────────────────────────────────
+    # ── Encode / reconstruct workers ─────────────────────────────────────────────
 
     def _start_encode(self):
         n = int(round(self._n_slider.get()))
@@ -218,15 +219,18 @@ class ShieldTab(ctk.CTkFrame):
         missing = [i + 1 for i, p in enumerate(self._cover_paths) if not p or not os.path.exists(p)]
         if missing:
             self._enc_status.configure(
-                text=f"Missing cover image(s): {missing}", text_color=COLORS["error"]); return
+                text=f"Missing cover image(s): {missing}", text_color=COLORS["error"])
+            return
         msg = self._payload_box.get("1.0", "end").strip()
         if not msg:
-            self._enc_status.configure(text="Enter a secret message.", text_color=COLORS["error"]); return
+            self._enc_status.configure(text="Enter a secret message.", text_color=COLORS["error"])
+            return
         pw = self._enc_pass.get()
         if not pw:
-            self._enc_status.configure(text="Enter a password.", text_color=COLORS["error"]); return
+            self._enc_status.configure(text="Enter a password.", text_color=COLORS["error"])
+            return
         out_dir = self._out_dir.get().strip() or os.path.expanduser("~")
-        self._enc_status.configure(text="Encoding…", text_color=COLORS["text_muted"])
+        self._enc_status.configure(text="Encoding\u2026", text_color=COLORS["text_muted"])
         threading.Thread(
             target=self._encode_worker,
             args=(self._cover_paths[:n], msg, pw, n, k, out_dir),
@@ -250,10 +254,12 @@ class ShieldTab(ctk.CTkFrame):
     def _start_reconstruct(self):
         loaded = [(i + 1, p) for i, p in enumerate(self._recon_paths) if p and os.path.exists(p)]
         if not loaded:
-            self._show_recon("Add at least one share image.", COLORS["error"]); return
+            self._show_recon("Add at least one share image.", COLORS["error"])
+            return
         pw = self._rec_pass.get()
         if not pw:
-            self._show_recon("Enter the decryption password.", COLORS["error"]); return
+            self._show_recon("Enter the decryption password.", COLORS["error"])
+            return
         threading.Thread(
             target=self._recon_worker, args=(loaded, pw), daemon=True
         ).start()
@@ -267,7 +273,7 @@ class ShieldTab(ctk.CTkFrame):
         except Exception as exc:
             self._ui_queue.put(("error_recon", str(exc)))
 
-    # ── UI helpers ────────────────────────────────────────────────────────────
+    # ── UI helpers ──────────────────────────────────────────────────────────
 
     def _show_recon(self, text, color=None):
         self._rec_result.configure(state="normal")
@@ -283,16 +289,16 @@ class ShieldTab(ctk.CTkFrame):
                 if msg[0] == "encode_ok":
                     _, saved, n, k = msg
                     self._enc_status.configure(
-                        text=f"✓ {n} shares saved. Any {k} reconstruct the secret.",
+                        text=f"\u2713 {n} shares saved. Any {k} reconstruct the secret.",
                         text_color=COLORS["accent"])
-                    self._history_cb("shield", f"Shield split {n}-of-{k} → {len(saved)} files", True, 0)
+                    self._history_cb("shield", f"Shield split {n}-of-{k} \u2192 {len(saved)} files", True, 0)
                 elif msg[0] == "recon_ok":
                     result = msg[1]
-                    text = result.get("text", f"[file: {result.get('filename','?')}]")
+                    text = result.get("text", f"[file: {result.get('filename', '?')}]")
                     self._show_recon(text)
                     self._history_cb("shield", "Shield reconstruction successful", True, 0)
                 elif msg[0] == "error":
-                    self._enc_status.configure(text=f"✗ {msg[1]}", text_color=COLORS["error"])
+                    self._enc_status.configure(text=f"\u2717 {msg[1]}", text_color=COLORS["error"])
                 elif msg[0] == "error_recon":
                     self._show_recon(f"Failed: {msg[1]}", COLORS["error"])
         except queue.Empty:
