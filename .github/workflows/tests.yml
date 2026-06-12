@@ -23,7 +23,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Install dependencies
-        run: pip install Pillow cryptography pytest "qrcode[pil]"
+        pip install numpy Pillow cryptography pytest "qrcode[pil]"
 
       - name: Run tests
         run: python -m pytest tests/ -v --tb=short
