@@ -1,24 +1,48 @@
+"""
+KeyManager — password strength scoring and secure share tokens.
+
+v2 changes (fixes audit finding V1 — CRITICAL):
+- REMOVED generate_share_link(), which QR-encoded the RAW PASSWORD and wrote it
+  to a temp file with delete=False, leaving the cleartext secret on disk forever.
+- Added generate_one_time_token(): returns a high-entropy random token that is
+  NOT the password. The token can be exchanged out-of-band; the password is
+  never serialized, logged, or written to disk by this module.
+"""
+import secrets
 import string
-import tempfile
 
 
 class KeyManager:
+    # ── Secure sharing ──
     @staticmethod
-    def generate_share_link(password: str, expiry_hours: int = 24) -> str:
-        import qrcode
+    def generate_one_time_token(num_bytes: int = 24) -> str:
+        """
+        Generate a URL-safe, single-use token to coordinate a secret exchange.
 
-        _ = expiry_hours
-        password_hint = password
-        qr_image = qrcode.make(password_hint)
-        handle = tempfile.NamedTemporaryFile(
-            prefix="stegoxpress_hint_",
-            suffix=".png",
-            delete=False,
-        )
-        handle.close()
-        qr_image.save(handle.name)
-        return handle.name
+        This token is independent of the user's password. Share it through a
+        separate channel from the stego image. The password itself is NEVER
+        encoded, persisted, or transmitted by StegoXpress.
+        """
+        return secrets.token_urlsafe(num_bytes)
 
+    @staticmethod
+    def make_token_qr(token: str, output_path: str) -> str:
+        """
+        Optionally render a QR for a NON-SECRET token (never the password).
+        Requires the optional `qrcode` dependency. Raises if a password-like
+        value is passed by mistake is the caller's responsibility — only pass
+        tokens from generate_one_time_token().
+        """
+        try:
+            import qrcode
+        except ImportError as exc:  # pragma: no cover
+            raise RuntimeError(
+                "QR support requires the optional 'qrcode' package: pip install qrcode[pil]"
+            ) from exc
+        qrcode.make(token).save(output_path)
+        return output_path
+
+    # ── Password strength ──
     @staticmethod
     def validate_password_strength(password: str) -> dict:
         length = len(password)
@@ -52,18 +76,8 @@ class KeyManager:
         if not any(char in string.punctuation for char in password):
             suggestions.append("Add a symbol.")
 
-        labels = {
-            0: "Weak",
-            1: "Fair",
-            2: "Good",
-            3: "Strong",
-            4: "Strong",
-        }
-        return {
-            "score": score,
-            "label": labels[score],
-            "suggestions": suggestions,
-        }
+        labels = {0: "Weak", 1: "Fair", 2: "Good", 3: "Strong", 4: "Strong"}
+        return {"score": score, "label": labels[score], "suggestions": suggestions}
 
     @staticmethod
     def _character_class_count(password: str) -> int:
