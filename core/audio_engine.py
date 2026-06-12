@@ -84,5 +84,5 @@ class AudioEngine:
     def capacity_bytes(wav_path: str) -> int:
         with wave.open(wav_path, "rb") as wav:
             params = wav.getparams()
-        n_samples = params.nframes * params.nchannels
+            n_samples = params.nframes * params.nchannels
         return n_samples // 8 - 4
