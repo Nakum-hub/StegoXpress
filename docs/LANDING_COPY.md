@@ -10,7 +10,7 @@ Ready-to-paste copy for a product page (Gumroad / Lemon Squeezy / personal site)
 
 **Subheadline:** StegoXpress locks your message with AES-256 encryption, then hides it inside an ordinary photo, song, or file. To everyone else, it's just a picture.
 
-**CTA button:** Download StegoXpress Pro
+**CTA button:** Buy StegoXpress Pro
 
 ---
 
@@ -34,9 +34,10 @@ Ready-to-paste copy for a product page (Gumroad / Lemon Squeezy / personal site)
 
 ## Trust section
 
-- Open-source core (MIT) — audit every line on GitHub
+- Professionally audited codebase: a full security review fixed every critical finding before release (the audit and fixes are documented in the changelog)
 - CI-tested on Python 3.10–3.12 with linting, type-checking, coverage, and dependency CVE audits
 - An honest threat model: we document what steganography **cannot** do, because security products that overpromise get people hurt
+- No telemetry, no accounts, no cloud — everything runs on your machine
 
 ---
 
@@ -44,9 +45,9 @@ Ready-to-paste copy for a product page (Gumroad / Lemon Squeezy / personal site)
 
 | Tier | Price | Includes |
 |---|---|---|
-| Community | Free | Full open-source app, GitHub support |
-| Pro | $29 one-time | Signed binaries (Win/macOS/Linux), batch mode, priority email support |
-| Business | $99/yr | Pro + invisible watermarking toolkit for leak-tracing, license for commercial use |
+| Personal | $19 one-time | Compiled desktop app (Win/macOS/Linux), personal-use license |
+| Pro | $39 one-time | Personal + full source code, CLI for scripting, priority email support |
+| Business | $99/yr | Pro + commercial-use license, invisible watermarking toolkit for leak-tracing |
 
 ---
 
@@ -58,8 +59,10 @@ Ready-to-paste copy for a product page (Gumroad / Lemon Squeezy / personal site)
 
 **What if I lose my password?** It's gone. There is no backdoor — that's the point.
 
+**Can I redistribute it?** No — StegoXpress is proprietary commercial software. Your license covers your own use; resale and redistribution require a separate agreement.
+
 ---
 
 ## One-paragraph pitch (for emails / marketplaces)
 
-> StegoXpress hides AES-256-GCM-encrypted secrets inside ordinary images, audio, and PNG metadata — with dual-password decoy vaults, N-of-K secret sharing, and built-in steganalysis scoring. Open-source core, polished desktop app, and a B2B invisible-watermarking edition for tracing leaked media.
+> StegoXpress hides AES-256-GCM-encrypted secrets inside ordinary images, audio, and PNG metadata — with dual-password decoy vaults, N-of-K secret sharing, and built-in steganalysis scoring. Security-audited, CI-tested, polished desktop app + scriptable CLI, and a B2B invisible-watermarking edition for tracing leaked media.
