@@ -42,7 +42,7 @@ class StegoXpressApp:
 
         ctk.CTkLabel(
             brand_block,
-            text="StegoXpress ◈",
+            text="StegoXpress \u25c8",
             text_color=COLORS["accent"],
             font=inter(20, "bold"),
         ).grid(row=0, column=0, sticky="w")
@@ -53,7 +53,7 @@ class StegoXpressApp:
             font=inter(11),
         ).grid(row=1, column=0, sticky="w")
 
-        settings = ReusableWidgets.ghost_button(top, "⚙", self.show_settings, width=54)
+        settings = ReusableWidgets.ghost_button(top, "\u2699", self.show_settings, width=54)
         settings.grid(row=0, column=1, sticky="e", padx=(0, 10), pady=14)
 
         about = ReusableWidgets.ghost_button(top, "About", self.show_about, width=100)
@@ -73,19 +73,19 @@ class StegoXpressApp:
             border_width=0,
         )
         self.tabs.grid(row=1, column=0, sticky="nsew", padx=18, pady=16)
-        self.tabs.add("↑  ENCODE")
-        self.tabs.add("↓  DECODE")
-        self.tabs.add("✉  SEND")
-        self.tabs.add("🔐  VAULT")
-        self.tabs.add("🛡  SHIELD")
-        self.tabs.add("⚙  HISTORY")
+        self.tabs.add("\u2191 ENCODE")
+        self.tabs.add("\u2193 DECODE")
+        self.tabs.add("\u2709 SEND")
+        self.tabs.add("\U0001f510 VAULT")
+        self.tabs.add("\U0001f6e1 SHIELD")
+        self.tabs.add("\u2699 HISTORY")
 
-        encode_host  = self.tabs.tab("↑  ENCODE")
-        decode_host  = self.tabs.tab("↓  DECODE")
-        send_host    = self.tabs.tab("✉  SEND")
-        vault_host   = self.tabs.tab("🔐  VAULT")
-        shield_host  = self.tabs.tab("🛡  SHIELD")
-        history_host = self.tabs.tab("⚙  HISTORY")
+        encode_host = self.tabs.tab("\u2191 ENCODE")
+        decode_host = self.tabs.tab("\u2193 DECODE")
+        send_host = self.tabs.tab("\u2709 SEND")
+        vault_host = self.tabs.tab("\U0001f510 VAULT")
+        shield_host = self.tabs.tab("\U0001f6e1 SHIELD")
+        history_host = self.tabs.tab("\u2699 HISTORY")
 
         for host in (encode_host, decode_host, send_host,
                      vault_host, shield_host, history_host):
@@ -150,7 +150,7 @@ class StegoXpressApp:
     def on_encode_complete(self, output_path):
         self.decode_tab.load_image_path(output_path)
         self.send_tab.set_image_path(output_path)
-        self.tabs.set("↓  DECODE")
+        self.tabs.set("\u2193 DECODE")
         self.show_toast(f"Encoded image ready: {output_path}")
 
     def on_send_success(self, recipient):
@@ -169,7 +169,8 @@ class StegoXpressApp:
 
         card = ReusableWidgets.card(dialog, border_width=1, border_color=COLORS["border"])
         card.pack(fill="both", expand=True, padx=18, pady=18)
-        ReusableWidgets.label(card, "StegoXpress", size=22, weight="bold").pack(anchor="w", padx=20, pady=(20, 4))
+        ReusableWidgets.label(card, "StegoXpress", size=22, weight="bold").pack(
+            anchor="w", padx=20, pady=(20, 4))
         ctk.CTkLabel(
             card,
             text=(
@@ -183,7 +184,8 @@ class StegoXpressApp:
             justify="left",
             wraplength=340,
         ).pack(anchor="w", padx=20, pady=(0, 18))
-        ReusableWidgets.primary_button(card, "Close", dialog.destroy, width=120).pack(anchor="e", padx=20, pady=(0, 20))
+        ReusableWidgets.primary_button(card, "Close", dialog.destroy, width=120).pack(
+            anchor="e", padx=20, pady=(0, 20))
 
     def show_settings(self):
         dialog = ctk.CTkToplevel(self.root)
@@ -219,7 +221,8 @@ class StegoXpressApp:
         output_entry.insert(0, Config.get("last_output_dir"))
 
         def browse_output_dir():
-            directory = filedialog.askdirectory(initialdir=output_entry.get() or Config.get("last_output_dir"))
+            directory = filedialog.askdirectory(
+                initialdir=output_entry.get() or Config.get("last_output_dir"))
             if directory:
                 output_entry.delete(0, "end")
                 output_entry.insert(0, directory)
@@ -302,7 +305,8 @@ class StegoXpressApp:
             ctk.set_appearance_mode(Config.get("theme"))
 
         def save_settings():
-            Config.set("last_output_dir", output_entry.get().strip() or Config.DEFAULTS["last_output_dir"])
+            Config.set("last_output_dir",
+                       output_entry.get().strip() or Config.DEFAULTS["last_output_dir"])
             Config.set("default_provider", provider_selector.get().lower())
             Config.set("remember_sender_email", bool(remember_var.get()))
             if Config.get("remember_sender_email"):
