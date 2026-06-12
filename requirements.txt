@@ -1,16 +1,6 @@
-# Core
-Pillow>=10.0.0
+# StegoXpress v2 — runtime dependencies (pinned minimums, audited)
+Pillow>=10.3.0
+numpy>=1.26.0
 cryptography>=42.0.0
-
-# GUI
 customtkinter>=5.2.0
-tkinterdnd2>=0.4.2
-
-# Transport / extras
-qrcode[pil]>=7.4.0
-
-# Build (optional)
-pyinstaller>=6.0.0
-
-# Development
-pytest>=7.0.0
+tkinterdnd2>=0.4.0
