@@ -3,16 +3,16 @@ from PIL import Image
 
 
 COLORS = {
-    "background": "#0d0d0d",
-    "surface": "#1a1a1a",
-    "card": "#242424",
-    "accent": "#00e676",
-    "accent_dim": "#00b359",
+    "background":   "#080c10",
+    "surface":      "#0e1318",
+    "card":         "#141b22",
+    "accent":       "#00ffe5",
+    "accent_dim":   "#00ccb8",
     "text_primary": "#e8e8e8",
-    "text_muted": "#888888",
-    "error": "#ff5252",
-    "warning": "#ffab40",
-    "border": "#333333",
+    "text_muted":   "#888888",
+    "error":        "#ff5252",
+    "warning":      "#ffab40",
+    "border":       "#1e2d3d",
 }
 
 
@@ -193,6 +193,18 @@ class ReusableWidgets:
     @staticmethod
     def image_preview(parent, size=280):
         return ImagePreview(parent, size=size)
+
+    @staticmethod
+    def load_preview(label_widget, image_path: str, size: int = 280):
+        """Load an image from disk and display it in a CTkLabel preview widget."""
+        try:
+            img = Image.open(image_path).convert("RGB")
+            img.thumbnail((size, size), Image.LANCZOS)
+            ctk_img = ctk.CTkImage(light_image=img, dark_image=img, size=img.size)
+            label_widget.configure(image=ctk_img, text="")
+            label_widget._ctk_image = ctk_img   # prevent GC
+        except Exception as exc:
+            label_widget.configure(text=f"Error: {exc}", image=None)
 
     @staticmethod
     def capacity_bar(parent, width=400):

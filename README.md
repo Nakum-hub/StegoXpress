@@ -1,123 +1,142 @@
-# StegoXpress
+# StegoXpress ◈
 
-StegoXpress is a Python steganography application for hiding encrypted text or files inside images with LSB encoding. It uses a password-based workflow, so no raw encryption key is emailed or stored in the image transport channel.
+![CI](https://github.com/Nakum-hub/StegoXpress/actions/workflows/tests.yml/badge.svg)
+![Python](https://img.shields.io/badge/python-3.10%2B-blue)
+![License](https://img.shields.io/badge/license-MIT-green)
+![Tests](https://img.shields.io/badge/tests-77%20passed-brightgreen)
+
+**Hide encrypted secrets inside images, audio, and PNG metadata.**
+The only Python steganography tool with dual-password hidden volumes,
+multi-carrier support, N-of-K secret sharing, and real-time steganalysis scoring.
+
+---
+
+## What Makes This Different
+
+| Feature | StegoXpress ◈ | Other tools |
+|---|:---:|:---:|
+| Dual-password hidden volumes (StegoVault) | ✅ | ❌ |
+| N-of-K Shamir secret sharing (StegoShield) | ✅ | ❌ |
+| Audio (WAV) carrier | ✅ | Rarely |
+| PNG metadata carrier (zero pixel change) | ✅ | ❌ |
+| HMAC tamper-proof seal | ✅ | ❌ |
+| Self-destruct after decode | ✅ | ❌ |
+| Live RS steganalysis score | ✅ | ❌ |
+| Entropy heatmap | ✅ | ❌ |
+| Adaptive LSB (high-entropy pixels only) | ✅ | ❌ |
+| CLI + GUI | ✅ | Rarely |
+| Password-based (no raw key transmitted) | ✅ | Rarely |
+
+---
 
 ## Features
 
-- Hide text or arbitrary files inside PNG-safe stego images.
-- Recover text or files with the agreed password.
-- AES-256-GCM encryption with PBKDF2-HMAC-SHA256 password derivation.
-- 4-byte length-prefixed LSB payload encoding.
-- CustomTkinter desktop GUI with Encode, Decode, and Send workflows.
-- SMTP transport for Gmail, Outlook, Yahoo, or custom providers.
-- Email sends only the stego image. Passwords must be shared out-of-band.
-- Drag-and-drop image loading in Encode and Decode tabs.
-- Session history for encode, decode, and send operations.
-- Rotating local logs under `~/.stegoxpress/logs/`.
-- Persistent user preferences under `~/.stegoxpress/config.json`.
-- Headless CLI mode for encode/decode automation.
+### 🔒 Core
+- **AES-256-GCM** encryption with PBKDF2-HMAC-SHA256 (480,000 iterations)
+- **LSB steganography** — length-prefixed, handles text and any file type
+- **Adaptive LSB** — embeds only in high-entropy regions to reduce detectability
 
-## Project Structure
+### 🔐 StegoVault
+Embed a **decoy** AND a **real** message in one image.
+- Password A → decoy message (what you show under pressure)
+- Password B → real message (the actual secret)
+- No structural evidence that a second message exists
 
-```text
-core/
-  lsb_engine.py       # Length-prefixed LSB image encoder/decoder
-  crypto_engine.py    # PBKDF2 + AES-GCM encryption
-  file_packer.py      # Text/file payload packing format
-gui/
-  app.py              # Main CustomTkinter app shell
-  encode_tab.py       # Encode and hide workflow
-  decode_tab.py       # Decode and extract workflow
-  send_tab.py         # Secure email transport workflow
-  history_tab.py      # In-memory session history
-  widgets.py          # Shared design-system widgets
-transport/
-  email_sender.py     # SMTP provider transport
-  key_manager.py      # Password hint QR and strength helper
-utils/
-  config.py           # User preferences in ~/.stegoxpress/config.json
-  logger.py           # Rotating logs in ~/.stegoxpress/logs/
-tests/
-  test_roundtrip.py
-  test_transport.py
-main.py               # GUI entry point
-```
+### 🛡 StegoShield
+Split one secret across **N images**. Any **K** images reconstruct it.
+- Uses Shamir's Secret Sharing over GF(257)
+- Ideal for teams — no single person can decode alone
+
+### 🎵 MultiCarrier
+- **Image LSB** — 1 bit per RGB channel, PNG output
+- **Audio WAV** — LSB of 16-bit PCM samples, WAV output
+- **PNG Metadata** — private "stXp" chunk; zero pixel modification
+
+### 🔏 StegoSeal & Self-Destruct
+- **Seal** — HMAC-SHA256 integrity check; decoding fails if image modified
+- **Self-Destruct** — LSB layer zeroed after first successful decode
+
+### 📊 Analysis Tools
+- **Entropy Heatmap** — visual overlay of safe pixel zones (blue→red gradient)
+- **Steganalysis Score** — RS-analysis detectability: Low / Medium / High Risk
+
+---
 
 ## Install
 
-```powershell
-python -m pip install -r requirements.txt
+```bash
+pip install -r requirements.txt
 ```
 
-## Run
+## Run GUI
 
-```powershell
+```bash
 python main.py
 ```
 
 ## CLI
 
-Encode text:
+```bash
+# Hide text
+python main.py encode --image cover.png --message "secret text" --password p --output out.png
 
-```powershell
-python main.py encode --image cover.png --message "secret text" --password mypass --output out.png
+# Hide a file
+python main.py encode --image cover.png --file secret.pdf --password p --output out.png
+
+# Decode
+python main.py decode --image out.png --password p
 ```
 
-Encode a file:
-
-```powershell
-python main.py encode --image cover.png --file secret.pdf --password mypass --output out.png
-```
-
-Decode:
-
-```powershell
-python main.py decode --image out.png --password mypass
-```
-
-## Test
-
-```powershell
-pytest tests/ -v
-```
-
-Expected result:
-
-```text
-22 passed
-```
-
-## Build
-
-Install dependencies:
-
-```powershell
-pip install -r requirements.txt
-```
-
-Build a Windows EXE:
-
-```powershell
-pyinstaller --onefile --windowed --icon=assets/logo.ico main.py
-```
-
-Build a macOS app:
+## Run Tests
 
 ```bash
-pyinstaller --onefile --windowed --icon=assets/logo.ico main.py
+python -m pytest tests/ -v
 ```
 
-## Secure Email Workflow
+## Build EXE (Windows)
 
-1. Encode text or a file into a cover image using a strong password.
-2. Send only the generated stego PNG through the Send tab.
-3. Share the password with the recipient through a separate channel.
-4. The recipient opens the stego image in the Decode tab and enters the agreed password.
+```bash
+pyinstaller StegoXpress.spec
+```
 
-The email body never includes the password, raw key, salt, nonce, or ciphertext metadata beyond the attached stego image.
+---
 
-## Notes
+## Project Structure
 
-- Use PNG output for stego images. Lossy formats such as JPEG can destroy hidden LSB data after encoding.
-- Gmail, Yahoo, and Outlook usually require app passwords for SMTP login.
-- Build artifacts in `build/` and `dist/` are ignored and should be regenerated locally when needed.
+```
+core/
+  lsb_engine.py        Standard + adaptive LSB, heatmap, steganalysis
+  crypto_engine.py     AES-256-GCM + PBKDF2 key derivation
+  file_packer.py       Binary payload format (text/file/vault/sealed/self-destruct)
+  vault_engine.py      Dual-password hidden volumes
+  audio_engine.py      WAV LSB steganography
+  png_chunk_engine.py  PNG ancillary chunk steganography
+  shamir_engine.py     Shamir's Secret Sharing over GF(257)
+  shield_engine.py     N-of-K multi-image secret sharing
+gui/
+  app.py               Main window + 6 tabs
+  encode_tab.py        Encode UI (carrier, heatmap, seal, adaptive toggles)
+  decode_tab.py        Decode UI (carrier, seal verification, self-destruct)
+  vault_tab.py         StegoVault UI
+  shield_tab.py        StegoShield UI
+  send_tab.py          Secure email (image only, no key in body)
+  history_tab.py       Session history
+  widgets.py           Design system + reusable widgets
+transport/
+  email_sender.py      Multi-provider SMTP
+  key_manager.py       Password strength + QR hint
+utils/
+  config.py            Persistent settings
+  logger.py            Rotating file log
+tests/                 77 tests across all modules
+main.py                CLI + GUI entry point
+```
+
+## Security
+
+See [SECURITY.md](SECURITY.md) for the full security model, known limitations,
+and vulnerability reporting process.
+
+## License
+
+MIT — see [LICENSE](LICENSE)

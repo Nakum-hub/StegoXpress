@@ -6,6 +6,8 @@ from gui.decode_tab import DecodeTab
 from gui.encode_tab import EncodeTab
 from gui.history_tab import HistoryTab
 from gui.send_tab import SendTab
+from gui.shield_tab import ShieldTab
+from gui.vault_tab import VaultTab
 from gui.widgets import COLORS, ReusableWidgets, inter
 from utils.config import Config
 from utils.logger import StegoLogger
@@ -40,7 +42,7 @@ class StegoXpressApp:
 
         ctk.CTkLabel(
             brand_block,
-            text="StegoXpress",
+            text="StegoXpress ◈",
             text_color=COLORS["accent"],
             font=inter(20, "bold"),
         ).grid(row=0, column=0, sticky="w")
@@ -74,20 +76,21 @@ class StegoXpressApp:
         self.tabs.add("↑  ENCODE")
         self.tabs.add("↓  DECODE")
         self.tabs.add("✉  SEND")
+        self.tabs.add("🔐  VAULT")
+        self.tabs.add("🛡  SHIELD")
         self.tabs.add("⚙  HISTORY")
 
-        encode_host = self.tabs.tab("↑  ENCODE")
-        decode_host = self.tabs.tab("↓  DECODE")
-        send_host = self.tabs.tab("✉  SEND")
+        encode_host  = self.tabs.tab("↑  ENCODE")
+        decode_host  = self.tabs.tab("↓  DECODE")
+        send_host    = self.tabs.tab("✉  SEND")
+        vault_host   = self.tabs.tab("🔐  VAULT")
+        shield_host  = self.tabs.tab("🛡  SHIELD")
         history_host = self.tabs.tab("⚙  HISTORY")
-        encode_host.grid_columnconfigure(0, weight=1)
-        encode_host.grid_rowconfigure(0, weight=1)
-        decode_host.grid_columnconfigure(0, weight=1)
-        decode_host.grid_rowconfigure(0, weight=1)
-        send_host.grid_columnconfigure(0, weight=1)
-        send_host.grid_rowconfigure(0, weight=1)
-        history_host.grid_columnconfigure(0, weight=1)
-        history_host.grid_rowconfigure(0, weight=1)
+
+        for host in (encode_host, decode_host, send_host,
+                     vault_host, shield_host, history_host):
+            host.grid_columnconfigure(0, weight=1)
+            host.grid_rowconfigure(0, weight=1)
 
         self.encode_tab = EncodeTab(encode_host, self.on_encode_complete)
         self.encode_tab.grid(row=0, column=0, sticky="nsew")
@@ -103,6 +106,20 @@ class StegoXpressApp:
         self.send_tab.grid(row=0, column=0, sticky="nsew")
         self.send_tab.status_callback = self.set_status
         self.send_tab.history_callback = self.add_history
+
+        self.vault_tab = VaultTab(
+            vault_host,
+            status_callback=self.set_status,
+            history_callback=self.add_history,
+        )
+        self.vault_tab.grid(row=0, column=0, sticky="nsew")
+
+        self.shield_tab = ShieldTab(
+            shield_host,
+            status_callback=self.set_status,
+            history_callback=self.add_history,
+        )
+        self.shield_tab.grid(row=0, column=0, sticky="nsew")
 
         self.history_tab = HistoryTab(history_host)
         self.history_tab.grid(row=0, column=0, sticky="nsew")
@@ -156,9 +173,10 @@ class StegoXpressApp:
         ctk.CTkLabel(
             card,
             text=(
-                "Hide encrypted text or files inside PNG-safe images.\n\n"
-                "Encryption uses password-derived AES-256-GCM keys. "
-                "Payloads are stored with length-prefixed LSB encoding."
+                "Hide encrypted secrets in images, audio, and PNG metadata.\n\n"
+                "Features: dual-password vault, N-of-K secret sharing, "
+                "tamper-proof seal, self-destruct, adaptive LSB, "
+                "entropy heatmap, and steganalysis scoring."
             ),
             text_color=COLORS["text_muted"],
             font=inter(12),

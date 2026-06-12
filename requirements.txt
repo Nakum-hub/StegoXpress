@@ -1,7 +1,16 @@
+# Core
 Pillow>=10.0.0
 cryptography>=42.0.0
+
+# GUI
 customtkinter>=5.2.0
-pytest>=7.0.0
-qrcode[pil]>=7.4.0
 tkinterdnd2>=0.4.2
+
+# Transport / extras
+qrcode[pil]>=7.4.0
+
+# Build (optional)
 pyinstaller>=6.0.0
+
+# Development
+pytest>=7.0.0

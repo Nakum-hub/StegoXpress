@@ -8,9 +8,11 @@ from tkinter import filedialog
 import customtkinter as ctk
 from PIL import Image
 
+from core.audio_engine import AudioEngine
 from core.crypto_engine import CryptoEngine
 from core.file_packer import FilePacker
 from core.lsb_engine import LSBEngine
+from core.png_chunk_engine import PngChunkEngine
 from gui.dnd import enable_image_drop
 from gui.widgets import COLORS, ReusableWidgets, format_bytes, inter, mono
 from utils.logger import StegoLogger
@@ -24,6 +26,7 @@ class DecodeTab(ctk.CTkFrame):
         self.logger = StegoLogger.get()
         self.image_path = None
         self.stego_image = None
+        self.audio_path = None
         self.result = None
         self.ui_queue = queue.Queue()
 
@@ -45,12 +48,39 @@ class DecodeTab(ctk.CTkFrame):
         self.setup_drag_and_drop()
         self.after(100, self.process_ui_queue)
 
+    CARRIERS = ["Image (LSB)", "Audio (WAV)", "PNG Metadata"]
+
     def _build_input_area(self):
         left = ReusableWidgets.card(self.content)
         left.grid(row=0, column=0, sticky="nsew", padx=(0, 12), pady=(0, 14))
         left.grid_columnconfigure(0, weight=1)
 
-        self._section_header(left, "STEGO IMAGE", 0)
+        self._section_header(left, "CARRIER TYPE", 0)
+        self.carrier_selector = ctk.CTkSegmentedButton(
+            left, values=self.CARRIERS,
+            command=self._on_carrier_change,
+            selected_color=COLORS["accent"],
+            selected_hover_color=COLORS["accent_dim"],
+            unselected_color=COLORS["surface"],
+            unselected_hover_color=COLORS["border"],
+            text_color=COLORS["text_primary"],
+            font=inter(11, "bold"), corner_radius=8,
+        )
+        self.carrier_selector.grid(row=1, column=0, sticky="ew", padx=20, pady=(8, 4))
+        self.carrier_selector.set("Image (LSB)")
+
+        # Audio browse row (hidden by default)
+        self.audio_frame = ctk.CTkFrame(left, fg_color="transparent")
+        self.audio_frame.grid(row=2, column=0, sticky="ew", padx=20, pady=(0, 6))
+        self.audio_frame.grid_columnconfigure(0, weight=1)
+        self.audio_entry = ReusableWidgets.entry(self.audio_frame, "Select .wav file…")
+        self.audio_entry.grid(row=0, column=0, sticky="ew", padx=(0, 6))
+        ReusableWidgets.ghost_button(
+            self.audio_frame, "Browse", self._browse_audio, width=70
+        ).grid(row=0, column=1)
+        self.audio_frame.grid_remove()
+
+        self._section_header(left, "STEGO IMAGE", 3)
         self.preview = ReusableWidgets.image_preview(left, size=280)
         self.preview.grid(row=1, column=0, pady=(10, 12))
 
@@ -141,6 +171,23 @@ class DecodeTab(ctk.CTkFrame):
             pady=(18 if row == 0 else 8, 2),
         )
 
+    def _on_carrier_change(self, value):
+        if value == "Audio (WAV)":
+            self.audio_frame.grid()
+        else:
+            self.audio_frame.grid_remove()
+
+    def _browse_audio(self):
+        from tkinter import filedialog as _fd
+        path = _fd.askopenfilename(
+            title="Select WAV File",
+            filetypes=[("WAV files", "*.wav"), ("All", "*.*")]
+        )
+        if path:
+            self.audio_path = path
+            self.audio_entry.delete(0, "end")
+            self.audio_entry.insert(0, path)
+
     def browse_image(self):
         path = filedialog.askopenfilename(
             filetypes=[
@@ -184,37 +231,58 @@ class DecodeTab(ctk.CTkFrame):
         self.preview.configure(fg_color=COLORS["accent"] if active else COLORS["surface"])
 
     def start_decode(self):
-        if self.stego_image is None:
-            self.fail_decode_validation("Load a stego image first.")
-            return
+        carrier = self.carrier_selector.get() if hasattr(self, "carrier_selector") else "Image (LSB)"
+
+        if carrier == "Audio (WAV)":
+            if not self.audio_path or not os.path.exists(self.audio_path):
+                self.fail_decode_validation("Select a WAV audio file first."); return
+        elif self.stego_image is None:
+            self.fail_decode_validation("Load a stego image first."); return
 
         password = self.password_entry.get()
         if not password:
-            self.fail_decode_validation("Enter the password.")
-            return
+            self.fail_decode_validation("Enter the password."); return
 
-        image = self.stego_image.copy()
+        image = self.stego_image.copy() if self.stego_image else None
         image_path = self.image_path
-        self.set_busy(True, "Decoding image...")
+        self.set_busy(True, "Decoding…")
         thread = threading.Thread(
             target=self.decode_worker,
-            args=(image, password, image_path),
+            args=(image, password, image_path, carrier),
             daemon=True,
         )
         thread.start()
 
-    def decode_worker(self, image, password, image_path):
+    def decode_worker(self, image, password, image_path, carrier="Image (LSB)"):
         start_time = time.perf_counter()
         payload_size = 0
         try:
-            raw_encrypted = LSBEngine.decode(image)
+            # Extract raw encrypted bytes from the chosen carrier
+            if carrier == "Audio (WAV)":
+                raw_encrypted = AudioEngine.decode(self.audio_path)
+            elif carrier == "PNG Metadata":
+                raw_encrypted = PngChunkEngine.decode(image_path)
+            else:
+                if hasattr(self, '_use_adaptive') and self._use_adaptive:
+                    raw_encrypted = LSBEngine.decode_adaptive(image)
+                else:
+                    raw_encrypted = LSBEngine.decode(image)
+
             payload_size = len(raw_encrypted)
+
             try:
                 payload = CryptoEngine.decrypt(raw_encrypted, password)
             except ValueError as exc:
-                raise ValueError("Wrong password or image is not a StegoXpress image") from exc
+                raise ValueError("Wrong password or not a StegoXpress image") from exc
 
-            result = FilePacker.unpack(payload)
+            # Handle sealed payloads
+            if FilePacker.is_sealed(payload):
+                result = FilePacker.verify_and_unpack_sealed(payload, password)
+                result["_seal_verified"] = True
+            else:
+                result = FilePacker.unpack(payload)
+                result["_seal_verified"] = False
+
             payload_size = len(payload)
             duration_ms = (time.perf_counter() - start_time) * 1000
             self.log_operation("decode", image, payload_size, True, "", duration_ms)
@@ -238,6 +306,13 @@ class DecodeTab(ctk.CTkFrame):
     def show_result(self, result, duration_ms=0, image_path=None):
         self.result = result
         self.set_busy(False, "Decode complete.")
+        # Seal badge
+        if result.get("_seal_verified"):
+            self._notify_status("✓ Seal verified — image untampered")
+        # Self-destruct warning
+        rtype = result.get("type", "")
+        if "self_destruct" in rtype:
+            self._show_self_destruct_warning(image_path)
         self.hide_results()
         self.results_card.grid()
 
@@ -276,6 +351,45 @@ class DecodeTab(ctk.CTkFrame):
         self.show_error(reason)
         self.log_operation("decode", self.stego_image, 0, False, reason, 0)
         self.add_history("decode", "Decode request blocked before processing", False, 0, reason)
+
+    def _show_self_destruct_warning(self, image_path):
+        """Show dialog warning user that the image will be erased after they dismiss."""
+        if not image_path or not os.path.exists(image_path):
+            return
+        dialog = ctk.CTkToplevel(self)
+        dialog.title("⚠ SELF-DESTRUCT")
+        dialog.geometry("440x220")
+        dialog.configure(fg_color=COLORS["background"])
+        dialog.transient(self)
+        dialog.grab_set()
+        dialog.lift()
+        ReusableWidgets.label(dialog, "⚠  SELF-DESTRUCT MODE", size=16, weight="bold").pack(
+            padx=20, pady=(20, 8))
+        ReusableWidgets.label(
+            dialog,
+            "This message will be erased from the image after you close this dialog.
+"
+            "Save or copy the content NOW before closing.",
+            size=12, muted=True).pack(padx=20, pady=(0, 14))
+
+        def erase_and_close():
+            try:
+                img = Image.open(image_path)
+                erased = LSBEngine.erase(img)
+                erased.save(image_path, "PNG")
+                self._notify_status("✓ Image erased — hidden data removed")
+            except Exception as exc:
+                self._notify_status(f"Erase failed: {exc}")
+            dialog.destroy()
+
+        btn_row = ctk.CTkFrame(dialog, fg_color="transparent")
+        btn_row.pack()
+        ReusableWidgets.ghost_button(btn_row, "Keep Image", dialog.destroy, width=140).pack(
+            side="left", padx=8)
+        ctk.CTkButton(btn_row, text="Erase Image Now",
+                      fg_color=COLORS["error"], hover_color="#cc3333",
+                      text_color="white", font=inter(12, "bold"),
+                      width=160, command=erase_and_close).pack(side="left", padx=8)
 
     def log_operation(self, operation, image, payload_size, success, reason, duration_ms):
         dimensions = f"{image.width}x{image.height}" if image is not None else "unknown"

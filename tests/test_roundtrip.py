@@ -141,3 +141,58 @@ def test_type_detection(tmp_path):
 
     assert text_payload["type"] == "text"
     assert file_payload["type"] == "file"
+
+
+# ── New tests added by upgrade ────────────────────────────────────────────────
+
+def test_unicode_text_roundtrip():
+    message = "ಕನ್ನಡ \U0001f512 \u0645\u0631\u062d\u0628\u0627 \u2014 secure"
+    password = "unicode-test-pw"
+    image = Image.new("RGB", (200, 200), "white")
+    packed = FilePacker.pack_text(message)
+    encrypted = CryptoEngine.encrypt(packed, password)
+    encoded = LSBEngine.encode(image, encrypted)
+    decrypted = CryptoEngine.decrypt(LSBEngine.decode(encoded), password)
+    assert FilePacker.unpack(decrypted)["text"] == message
+
+
+def test_capacity_bytes_helper():
+    image = Image.new("RGB", (100, 100), "white")
+    assert LSBEngine.capacity_bytes(image) == (100 * 100 * 3) // 8 - 4
+
+
+def test_bits_used_percent_helper():
+    image = Image.new("RGB", (100, 100), "white")
+    pct = LSBEngine.bits_used_percent(image, 100)
+    assert 0 < pct < 100
+    full_pct = LSBEngine.bits_used_percent(image, LSBEngine.capacity_bytes(image))
+    assert full_pct <= 100.1
+
+
+def test_heatmap_returns_rgb_same_size():
+    image = Image.new("RGB", (30, 30), (128, 64, 32))
+    heatmap = LSBEngine.generate_heatmap(image)
+    assert heatmap.mode == "RGB"
+    assert heatmap.size == image.size
+
+
+def test_steganalysis_score_bounds():
+    image = Image.new("RGB", (100, 100), "white")
+    score = LSBEngine.steganalysis_score(image, image)
+    assert 0.0 <= score <= 1.0
+
+
+def test_steganalysis_score_encoded_image():
+    image = Image.new("RGB", (100, 100), "white")
+    stego = LSBEngine.encode(image, os.urandom(200))
+    score = LSBEngine.steganalysis_score(image, stego)
+    assert 0.0 <= score <= 1.0
+
+
+def test_empty_message_roundtrip():
+    image = Image.new("RGB", (50, 50), "white")
+    packed = FilePacker.pack_text("")
+    encrypted = CryptoEngine.encrypt(packed, "emptypass")
+    stego = LSBEngine.encode(image, encrypted)
+    decrypted = CryptoEngine.decrypt(LSBEngine.decode(stego), "emptypass")
+    assert FilePacker.unpack(decrypted)["text"] == ""
