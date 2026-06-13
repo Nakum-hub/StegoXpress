@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/github_banner.png" alt="StegoXpress" width="280"/>
+  <img src="assets/github_banner.png" alt="StegoXpress" width="480"/>
 </p>
 
 <h1 align="center">StegoXpress</h1>
