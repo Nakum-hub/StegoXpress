@@ -1,0 +1,250 @@
+<svg viewBox="0 0 800 500" width="800" height="500" xmlns="http://www.w3.org/2000/svg" role="img">
+<title>StegoXpress Logo</title>
+<defs>
+  <pattern id="dotbg" x="0" y="0" width="22" height="22" patternUnits="userSpaceOnUse">
+    <circle cx="11" cy="11" r="0.8" fill="#1a2e42"/>
+  </pattern>
+  <pattern id="pixgrid" x="0" y="0" width="13" height="13" patternUnits="userSpaceOnUse">
+    <rect x="1.5" y="1.5" width="10" height="10" fill="#00ffe5" opacity="0.13" rx="1.5"/>
+  </pattern>
+  <radialGradient id="irisL" cx="42%" cy="42%" r="58%">
+    <stop offset="0%" stop-color="#0d2240"/>
+    <stop offset="45%" stop-color="#0a1a32"/>
+    <stop offset="100%" stop-color="#06101e"/>
+  </radialGradient>
+  <radialGradient id="pupilG" cx="50%" cy="50%" r="50%">
+    <stop offset="0%" stop-color="#010305"/>
+    <stop offset="100%" stop-color="#04080f"/>
+  </radialGradient>
+  <clipPath id="eyeClip">
+    <path d="M120,225 C270,95 530,95 680,225 C530,355 270,355 120,225Z"/>
+  </clipPath>
+  <filter id="softglow">
+    <feGaussianBlur in="SourceGraphic" stdDeviation="3" result="blur"/>
+    <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+  </filter>
+</defs>
+
+<!-- Background -->
+<rect width="800" height="500" fill="#080c10" rx="18"/>
+<rect width="800" height="500" fill="url(#dotbg)" rx="18" opacity="0.9"/>
+
+<!-- Scattered pixel squares — background atmosphere -->
+<rect x="36" y="44" width="9" height="9" fill="#00ffe5" opacity="0.18" rx="1.5"/>
+<rect x="58" y="88" width="6" height="6" fill="#00ffe5" opacity="0.12" rx="1.5"/>
+<rect x="22" y="148" width="11" height="11" fill="#00ffe5" opacity="0.15" rx="1.5"/>
+<rect x="44" y="326" width="8" height="8" fill="#00ffe5" opacity="0.13" rx="1.5"/>
+<rect x="68" y="400" width="6" height="6" fill="#00ffe5" opacity="0.1" rx="1.5"/>
+<rect x="28" y="258" width="7" height="7" fill="#00ffe5" opacity="0.16" rx="1.5"/>
+<rect x="724" y="52" width="10" height="10" fill="#00ffe5" opacity="0.19" rx="1.5"/>
+<rect x="748" y="106" width="6" height="6" fill="#00ffe5" opacity="0.13" rx="1.5"/>
+<rect x="710" y="180" width="9" height="9" fill="#00ffe5" opacity="0.15" rx="1.5"/>
+<rect x="752" y="310" width="7" height="7" fill="#00ffe5" opacity="0.14" rx="1.5"/>
+<rect x="728" y="390" width="11" height="11" fill="#00ffe5" opacity="0.12" rx="1.5"/>
+<rect x="196" y="38" width="7" height="7" fill="#00ffe5" opacity="0.22" rx="1.5"/>
+<rect x="278" y="28" width="5" height="5" fill="#00ffe5" opacity="0.17" rx="1.5"/>
+<rect x="386" y="22" width="8" height="8" fill="#00ffe5" opacity="0.20" rx="1.5"/>
+<rect x="500" y="30" width="6" height="6" fill="#00ffe5" opacity="0.18" rx="1.5"/>
+<rect x="596" y="42" width="9" height="9" fill="#00ffe5" opacity="0.16" rx="1.5"/>
+<rect x="178" y="450" width="8" height="8" fill="#00ffe5" opacity="0.15" rx="1.5"/>
+<rect x="300" y="462" width="6" height="6" fill="#00ffe5" opacity="0.12" rx="1.5"/>
+<rect x="440" y="468" width="9" height="9" fill="#00ffe5" opacity="0.14" rx="1.5"/>
+<rect x="568" y="455" width="7" height="7" fill="#00ffe5" opacity="0.16" rx="1.5"/>
+<rect x="636" y="440" width="5" height="5" fill="#00ffe5" opacity="0.11" rx="1.5"/>
+
+<!-- === EYE SHAPE === -->
+<!-- Eye white / sclera base -->
+<path d="M120,225 C270,95 530,95 680,225 C530,355 270,355 120,225Z" fill="#050a12"/>
+
+<!-- LEFT HALF — organic iris (inside clip) -->
+<g clip-path="url(#eyeClip)">
+  <!-- Left zone — organic blue -->
+  <rect x="0" y="0" width="400" height="500" fill="#060d1a"/>
+
+  <!-- Iris ring layers -->
+  <circle cx="400" cy="225" r="108" fill="url(#irisL)"/>
+  <circle cx="400" cy="225" r="108" fill="none" stroke="#0f2a4a" stroke-width="28"/>
+  <circle cx="400" cy="225" r="95" fill="none" stroke="#0c2238" stroke-width="12"/>
+  <circle cx="400" cy="225" r="82" fill="none" stroke="#091c2e" stroke-width="8"/>
+
+  <!-- Iris texture lines — radial -->
+  <line x1="328" y1="140" x2="310" y2="116" stroke="#163652" stroke-width="1.2" opacity="0.7"/>
+  <line x1="368" y1="122" x2="358" y2="96"  stroke="#163652" stroke-width="1.2" opacity="0.6"/>
+  <line x1="310" y1="168" x2="285" y2="155" stroke="#163652" stroke-width="1.2" opacity="0.65"/>
+  <line x1="296" y1="206" x2="268" y2="200" stroke="#163652" stroke-width="1.2" opacity="0.6"/>
+  <line x1="304" y1="250" x2="278" y2="262" stroke="#163652" stroke-width="1.2" opacity="0.6"/>
+  <line x1="330" y1="288" x2="316" y2="312" stroke="#163652" stroke-width="1.2" opacity="0.65"/>
+  <line x1="366" y1="307" x2="358" y2="334" stroke="#163652" stroke-width="1.2" opacity="0.55"/>
+  <line x1="400" y1="117" x2="400" y2="89"  stroke="#163652" stroke-width="1.2" opacity="0.5"/>
+
+  <!-- Pupil -->
+  <circle cx="400" cy="225" r="52" fill="url(#pupilG)"/>
+  <circle cx="400" cy="225" r="38" fill="#02040a"/>
+  <circle cx="400" cy="225" r="26" fill="#010204"/>
+
+  <!-- Specular highlight -->
+  <ellipse cx="382" cy="207" rx="10" ry="8" fill="white" opacity="0.55"/>
+  <ellipse cx="373" cy="203" rx="3.5" ry="2.5" fill="white" opacity="0.32"/>
+
+  <!-- RIGHT HALF — pixel / data grid -->
+  <rect x="400" y="0" width="400" height="500" fill="#080c10"/>
+  <rect x="400" y="0" width="400" height="500" fill="url(#pixgrid)"/>
+
+  <!-- Pixel iris rings -->
+  <circle cx="400" cy="225" r="108" fill="none" stroke="#00ffe5" stroke-width="1.5" opacity="0.35" stroke-dasharray="4 3"/>
+  <circle cx="400" cy="225" r="82"  fill="none" stroke="#00ffe5" stroke-width="1"   opacity="0.25" stroke-dasharray="3 4"/>
+  <circle cx="400" cy="225" r="56"  fill="none" stroke="#00ffe5" stroke-width="0.8" opacity="0.2"  stroke-dasharray="2 5"/>
+
+  <!-- Pixel data squares filling iris right half -->
+  <!-- Row 1 -->
+  <rect x="412" y="135" width="11" height="11" fill="#00ffe5" opacity="0.55" rx="1.5"/>
+  <rect x="426" y="135" width="11" height="11" fill="#00ffe5" opacity="0.38" rx="1.5"/>
+  <rect x="440" y="135" width="11" height="11" fill="#00ffe5" opacity="0.62" rx="1.5"/>
+  <rect x="454" y="135" width="11" height="11" fill="#00ffe5" opacity="0.28" rx="1.5"/>
+  <rect x="468" y="135" width="11" height="11" fill="#00ffe5" opacity="0.45" rx="1.5"/>
+  <!-- Row 2 -->
+  <rect x="404" y="149" width="11" height="11" fill="#00ffe5" opacity="0.32" rx="1.5"/>
+  <rect x="418" y="149" width="11" height="11" fill="#00ffe5" opacity="0.72" rx="1.5"/>
+  <rect x="432" y="149" width="11" height="11" fill="#00ffe5" opacity="0.44" rx="1.5"/>
+  <rect x="446" y="149" width="11" height="11" fill="#00ffe5" opacity="0.56" rx="1.5"/>
+  <rect x="460" y="149" width="11" height="11" fill="#00ffe5" opacity="0.28" rx="1.5"/>
+  <rect x="474" y="149" width="11" height="11" fill="#00ffe5" opacity="0.38" rx="1.5"/>
+  <rect x="488" y="149" width="11" height="11" fill="#00ffe5" opacity="0.22" rx="1.5"/>
+  <!-- Row 3 -->
+  <rect x="402" y="163" width="11" height="11" fill="#00ffe5" opacity="0.48" rx="1.5"/>
+  <rect x="416" y="163" width="11" height="11" fill="#00ffe5" opacity="0.35" rx="1.5"/>
+  <rect x="430" y="163" width="11" height="11" fill="#00ffe5" opacity="0.78" rx="1.5"/>
+  <rect x="444" y="163" width="11" height="11" fill="#00ffe5" opacity="0.55" rx="1.5"/>
+  <rect x="458" y="163" width="11" height="11" fill="#00ffe5" opacity="0.40" rx="1.5"/>
+  <rect x="472" y="163" width="11" height="11" fill="#00ffe5" opacity="0.62" rx="1.5"/>
+  <rect x="486" y="163" width="11" height="11" fill="#00ffe5" opacity="0.28" rx="1.5"/>
+  <rect x="500" y="163" width="11" height="11" fill="#00ffe5" opacity="0.18" rx="1.5"/>
+  <!-- Row 4 -->
+  <rect x="402" y="177" width="11" height="11" fill="#00ffe5" opacity="0.55" rx="1.5"/>
+  <rect x="416" y="177" width="11" height="11" fill="#00ffe5" opacity="0.88" rx="1.5"/>
+  <rect x="430" y="177" width="11" height="11" fill="#00ffe5" opacity="0.42" rx="1.5"/>
+  <rect x="444" y="177" width="11" height="11" fill="#00ffe5" opacity="0.65" rx="1.5"/>
+  <rect x="458" y="177" width="11" height="11" fill="#00ffe5" opacity="0.30" rx="1.5"/>
+  <rect x="472" y="177" width="11" height="11" fill="#00ffe5" opacity="0.52" rx="1.5"/>
+  <rect x="486" y="177" width="11" height="11" fill="#00ffe5" opacity="0.38" rx="1.5"/>
+  <rect x="500" y="177" width="11" height="11" fill="#00ffe5" opacity="0.22" rx="1.5"/>
+  <rect x="514" y="177" width="11" height="11" fill="#00ffe5" opacity="0.15" rx="1.5"/>
+  <!-- Row 5 — pupil zone -->
+  <rect x="460" y="191" width="11" height="11" fill="#00ffe5" opacity="0.92" rx="1.5"/>
+  <rect x="474" y="191" width="11" height="11" fill="#00ffe5" opacity="0.48" rx="1.5"/>
+  <rect x="488" y="191" width="11" height="11" fill="#00ffe5" opacity="0.70" rx="1.5"/>
+  <rect x="502" y="191" width="11" height="11" fill="#00ffe5" opacity="0.35" rx="1.5"/>
+  <rect x="516" y="191" width="11" height="11" fill="#00ffe5" opacity="0.20" rx="1.5"/>
+  <!-- Row 6 -->
+  <rect x="402" y="205" width="11" height="11" fill="#00ffe5" opacity="0.58" rx="1.5"/>
+  <rect x="416" y="205" width="11" height="11" fill="#00ffe5" opacity="0.80" rx="1.5"/>
+  <rect x="430" y="205" width="11" height="11" fill="#00ffe5" opacity="0.35" rx="1.5"/>
+  <rect x="444" y="205" width="11" height="11" fill="#00ffe5" opacity="0.55" rx="1.5"/>
+  <rect x="458" y="205" width="11" height="11" fill="#00ffe5" opacity="0.42" rx="1.5"/>
+  <rect x="472" y="205" width="11" height="11" fill="#00ffe5" opacity="0.68" rx="1.5"/>
+  <rect x="486" y="205" width="11" height="11" fill="#00ffe5" opacity="0.28" rx="1.5"/>
+  <rect x="500" y="205" width="11" height="11" fill="#00ffe5" opacity="0.45" rx="1.5"/>
+  <rect x="514" y="205" width="11" height="11" fill="#00ffe5" opacity="0.18" rx="1.5"/>
+  <!-- Row 7 -->
+  <rect x="402" y="219" width="11" height="11" fill="#00ffe5" opacity="0.45" rx="1.5"/>
+  <rect x="416" y="219" width="11" height="11" fill="#00ffe5" opacity="0.62" rx="1.5"/>
+  <rect x="430" y="219" width="11" height="11" fill="#00ffe5" opacity="0.88" rx="1.5"/>
+  <rect x="444" y="219" width="11" height="11" fill="#00ffe5" opacity="0.38" rx="1.5"/>
+  <rect x="456" y="219" width="11" height="11" fill="#00ffe5" opacity="0.25" rx="1.5"/>
+  <rect x="470" y="219" width="11" height="11" fill="#00ffe5" opacity="0.55" rx="1.5"/>
+  <rect x="484" y="219" width="11" height="11" fill="#00ffe5" opacity="0.72" rx="1.5"/>
+  <rect x="498" y="219" width="11" height="11" fill="#00ffe5" opacity="0.33" rx="1.5"/>
+  <rect x="512" y="219" width="11" height="11" fill="#00ffe5" opacity="0.20" rx="1.5"/>
+  <!-- Row 8 -->
+  <rect x="402" y="233" width="11" height="11" fill="#00ffe5" opacity="0.52" rx="1.5"/>
+  <rect x="416" y="233" width="11" height="11" fill="#00ffe5" opacity="0.38" rx="1.5"/>
+  <rect x="430" y="233" width="11" height="11" fill="#00ffe5" opacity="0.65" rx="1.5"/>
+  <rect x="444" y="233" width="11" height="11" fill="#00ffe5" opacity="0.82" rx="1.5"/>
+  <rect x="458" y="233" width="11" height="11" fill="#00ffe5" opacity="0.44" rx="1.5"/>
+  <rect x="472" y="233" width="11" height="11" fill="#00ffe5" opacity="0.30" rx="1.5"/>
+  <rect x="486" y="233" width="11" height="11" fill="#00ffe5" opacity="0.58" rx="1.5"/>
+  <rect x="500" y="233" width="11" height="11" fill="#00ffe5" opacity="0.22" rx="1.5"/>
+  <rect x="514" y="233" width="11" height="11" fill="#00ffe5" opacity="0.15" rx="1.5"/>
+  <!-- Row 9 -->
+  <rect x="402" y="247" width="11" height="11" fill="#00ffe5" opacity="0.40" rx="1.5"/>
+  <rect x="416" y="247" width="11" height="11" fill="#00ffe5" opacity="0.75" rx="1.5"/>
+  <rect x="430" y="247" width="11" height="11" fill="#00ffe5" opacity="0.50" rx="1.5"/>
+  <rect x="444" y="247" width="11" height="11" fill="#00ffe5" opacity="0.35" rx="1.5"/>
+  <rect x="458" y="247" width="11" height="11" fill="#00ffe5" opacity="0.60" rx="1.5"/>
+  <rect x="472" y="247" width="11" height="11" fill="#00ffe5" opacity="0.42" rx="1.5"/>
+  <rect x="486" y="247" width="11" height="11" fill="#00ffe5" opacity="0.28" rx="1.5"/>
+  <rect x="500" y="247" width="11" height="11" fill="#00ffe5" opacity="0.18" rx="1.5"/>
+  <!-- Row 10 -->
+  <rect x="404" y="261" width="11" height="11" fill="#00ffe5" opacity="0.48" rx="1.5"/>
+  <rect x="418" y="261" width="11" height="11" fill="#00ffe5" opacity="0.65" rx="1.5"/>
+  <rect x="432" y="261" width="11" height="11" fill="#00ffe5" opacity="0.32" rx="1.5"/>
+  <rect x="446" y="261" width="11" height="11" fill="#00ffe5" opacity="0.55" rx="1.5"/>
+  <rect x="460" y="261" width="11" height="11" fill="#00ffe5" opacity="0.78" rx="1.5"/>
+  <rect x="474" y="261" width="11" height="11" fill="#00ffe5" opacity="0.38" rx="1.5"/>
+  <rect x="488" y="261" width="11" height="11" fill="#00ffe5" opacity="0.22" rx="1.5"/>
+  <!-- Row 11 -->
+  <rect x="412" y="275" width="11" height="11" fill="#00ffe5" opacity="0.55" rx="1.5"/>
+  <rect x="426" y="275" width="11" height="11" fill="#00ffe5" opacity="0.38" rx="1.5"/>
+  <rect x="440" y="275" width="11" height="11" fill="#00ffe5" opacity="0.68" rx="1.5"/>
+  <rect x="454" y="275" width="11" height="11" fill="#00ffe5" opacity="0.45" rx="1.5"/>
+  <rect x="468" y="275" width="11" height="11" fill="#00ffe5" opacity="0.28" rx="1.5"/>
+  <!-- Row 12 -->
+  <rect x="418" y="289" width="11" height="11" fill="#00ffe5" opacity="0.42" rx="1.5"/>
+  <rect x="432" y="289" width="11" height="11" fill="#00ffe5" opacity="0.28" rx="1.5"/>
+  <rect x="446" y="289" width="11" height="11" fill="#00ffe5" opacity="0.52" rx="1.5"/>
+  <rect x="460" y="289" width="11" height="11" fill="#00ffe5" opacity="0.32" rx="1.5"/>
+</g>
+
+<!-- Eye outline stroke on top -->
+<path d="M120,225 C270,95 530,95 680,225 C530,355 270,355 120,225Z"
+      fill="none" stroke="#00ffe5" stroke-width="2.5" opacity="0.9"/>
+
+<!-- Centre dividing line — vertical seam through pupil -->
+<line x1="400" y1="113" x2="400" y2="337" stroke="white" stroke-width="1.5" opacity="0.22"/>
+
+<!-- Diamond mark (brand symbol) centred in pupil — left half organic, right pixel -->
+<polygon points="400,196 418,225 400,254 382,225" fill="none" stroke="white" stroke-width="1.8" opacity="0.35"/>
+<polygon points="400,205 412,225 400,245 388,225" fill="none" stroke="#00ffe5" stroke-width="2.5"/>
+<!-- Diamond fill: left=dark blue, right=cyan -->
+<path d="M400,205 L388,225 L400,245Z" fill="#0d2a45" opacity="0.85"/>
+<path d="M400,205 L412,225 L400,245Z" fill="#00ffe5" opacity="0.92"/>
+<!-- Diamond centre dot -->
+<circle cx="400" cy="225" r="4.5" fill="#00ffe5"/>
+<circle cx="400" cy="225" r="2.2" fill="white"/>
+
+<!-- Eyelid edge glints -->
+<path d="M200,166 C240,148 290,138 340,135" stroke="#00ffe5" stroke-width="1.2" fill="none" opacity="0.35"/>
+<path d="M200,284 C240,302 290,312 340,315" stroke="#00ffe5" stroke-width="1.2" fill="none" opacity="0.25"/>
+
+<!-- === WORDMARK === -->
+<!-- Main name -->
+<text x="400" y="408" text-anchor="middle"
+      font-family="'Courier New','Lucida Console','Consolas',monospace"
+      font-size="46" font-weight="700" letter-spacing="5">
+  <tspan fill="#c8dae8">STEGO</tspan><tspan fill="#00ffe5">X</tspan><tspan fill="#c8dae8">PRESS</tspan>
+</text>
+
+<!-- Diamond mark after name -->
+<text x="400" y="432" text-anchor="middle"
+      font-family="'Courier New',monospace" font-size="11"
+      fill="#00ffe5" opacity="0.55" letter-spacing="1">◈</text>
+
+<!-- Tagline -->
+<text x="400" y="454" text-anchor="middle"
+      font-family="'Courier New','Consolas',monospace"
+      font-size="10" fill="#2a4558" letter-spacing="5">
+  HIDDEN · ENCRYPTED · UNSTOPPABLE
+</text>
+
+<!-- Corner binary accent marks -->
+<text x="38" y="488" font-family="monospace" font-size="9" fill="#1a3245" opacity="0.8">01001000 01001001 01000100 01000101</text>
+<text x="762" y="488" text-anchor="end" font-family="monospace" font-size="9" fill="#1a3245" opacity="0.8">01000101 01001110 01000011</text>
+
+<!-- Top-right version tag -->
+<rect x="680" y="18" width="90" height="20" fill="#0e1b26" rx="4"/>
+<text x="725" y="32" text-anchor="middle" font-family="monospace" font-size="9" fill="#00ffe5" letter-spacing="2">v2.0 ◈</text>
+
+<!-- Subtle scan line accent across eye -->
+<line x1="120" y1="222" x2="680" y2="222" stroke="#00ffe5" stroke-width="0.6" opacity="0.09"/>
+<line x1="120" y1="228" x2="680" y2="228" stroke="#00ffe5" stroke-width="0.4" opacity="0.06"/>
+</svg>
