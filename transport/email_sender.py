@@ -51,12 +51,13 @@ class EmailSender:
         recipient: str,
         image_path: str,
         hint_message: str = "",
+        subject: str = "",
     ) -> bool:
         if not os.path.exists(image_path):
             raise FileNotFoundError(f"Stego image not found: {image_path}")
 
         try:
-            message = self._build_message(username, recipient, image_path, hint_message)
+            message = self._build_message(username, recipient, image_path, hint_message, subject)
 
             with self._open_server() as server:
                 server.login(username, password)
@@ -94,18 +95,18 @@ class EmailSender:
         recipient: str,
         image_path: str,
         hint_message: str,
+        subject: str = "",
     ) -> EmailMessage:
         message = EmailMessage()
         message["From"] = username
         message["To"] = recipient
-        message["Subject"] = "StegoXpress — Secure Message"
+        # Default subject is deliberately generic — do not reveal the tool name.
+        # The caller can supply a custom subject; empty string triggers the default.
+        message["Subject"] = subject.strip() if subject.strip() else "Shared image"
 
-        body = (
-            "The attached PNG contains hidden StegoXpress content.\n\n"
-            "You need the password agreed with the sender to decode it."
-        )
+        body = "Please find the attached image."
         if hint_message:
-            body += f"\n\nHint: {hint_message}"
+            body += f"\n\n{hint_message}"
 
         message.set_content(body)
 

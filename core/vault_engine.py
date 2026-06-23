@@ -7,11 +7,17 @@ NOTE (audit finding V4): plausible deniability here is statistical, not absolute
 A forensic analyst can observe LSB randomness across the WHOLE image while the
 decoy only "explains" the first half. Treat the decoy as protection against a
 casual adversary, not a nation-state. See SECURITY.md for the honest threat model.
+
+v2.1: Rewrote pixel I/O to use NumPy instead of the deprecated Image.getdata() /
+Image.putdata() API (removed in Pillow 14, 2027-10-15). Behaviour is identical.
 """
 import struct
+
+import numpy as np
 from PIL import Image
-from core.lsb_engine import LSBEngine
+
 from core.crypto_engine import CryptoEngine
+from core.lsb_engine import LSBEngine
 
 
 class VaultEngine:
@@ -19,7 +25,8 @@ class VaultEngine:
     def encode(image: Image.Image, decoy_payload: bytes, real_payload: bytes,
                password_outer: str, password_real: str) -> Image.Image:
         working = LSBEngine._to_rgb_image(image)
-        total_pix = working.width * working.height
+        arr = np.asarray(working, dtype=np.uint8).reshape(-1, 3).copy()
+        total_pix = arr.shape[0]
         split_pix = total_pix // 2
 
         enc_outer = CryptoEngine.encrypt(decoy_payload, password_outer)
@@ -34,20 +41,19 @@ class VaultEngine:
             raise ValueError(f"Real payload too large: needs {len(enc_inner)} bytes, "
                              f"inner zone holds {cap_inner} bytes")
 
-        pix = list(working.getdata())
-        VaultEngine._write_zone(pix, 0, split_pix, enc_outer)
-        VaultEngine._write_zone(pix, split_pix, total_pix, enc_inner)
-        out = Image.new("RGB", working.size)
-        out.putdata(pix)
+        VaultEngine._write_zone_arr(arr, 0, split_pix, enc_outer)
+        VaultEngine._write_zone_arr(arr, split_pix, total_pix, enc_inner)
+
+        out = Image.fromarray(arr.reshape(working.height, working.width, 3), "RGB")
         return out
 
     @staticmethod
     def decode_outer(image: Image.Image, password_outer: str) -> bytes:
         working = LSBEngine._to_rgb_image(image)
-        total_pix = working.width * working.height
+        arr = np.asarray(working, dtype=np.uint8).reshape(-1, 3)
+        total_pix = arr.shape[0]
         split_pix = total_pix // 2
-        pix = list(working.getdata())
-        enc = VaultEngine._read_zone(pix, 0, split_pix)
+        enc = VaultEngine._read_zone_arr(arr, 0, split_pix)
         try:
             return CryptoEngine.decrypt(enc, password_outer)
         except ValueError as exc:
@@ -56,10 +62,10 @@ class VaultEngine:
     @staticmethod
     def decode_inner(image: Image.Image, password_real: str) -> bytes:
         working = LSBEngine._to_rgb_image(image)
-        total_pix = working.width * working.height
+        arr = np.asarray(working, dtype=np.uint8).reshape(-1, 3)
+        total_pix = arr.shape[0]
         split_pix = total_pix // 2
-        pix = list(working.getdata())
-        enc = VaultEngine._read_zone(pix, split_pix, total_pix)
+        enc = VaultEngine._read_zone_arr(arr, split_pix, total_pix)
         try:
             return CryptoEngine.decrypt(enc, password_real)
         except ValueError as exc:
@@ -77,37 +83,24 @@ class VaultEngine:
         split_pix = total_pix // 2
         return (total_pix - split_pix) * 3 // 8 - 4
 
+    # ── NumPy zone helpers ──
     @staticmethod
-    def _write_zone(pixels: list, start: int, end: int, payload: bytes):
+    def _write_zone_arr(arr: np.ndarray, start: int, end: int, payload: bytes) -> None:
         full = struct.pack(">I", len(payload)) + payload
-        bits = [((b >> i) & 1) for b in full for i in range(7, -1, -1)]
-        bp = 0
-        for pi in range(start, end):
-            if bp >= len(bits):
-                break
-            ch = list(pixels[pi])
-            for c in range(3):
-                if bp < len(bits):
-                    ch[c] = (ch[c] & 0xFE) | bits[bp]
-                    bp += 1
-            pixels[pi] = tuple(ch)
+        bits = np.unpackbits(np.frombuffer(full, dtype=np.uint8))
+        zone = arr[start:end].reshape(-1)
+        n = min(bits.size, zone.size)
+        zone[:n] = (zone[:n] & 0xFE) | bits[:n]
+        arr[start:end] = zone.reshape(-1, 3)
 
     @staticmethod
-    def _read_zone(pixels: list, start: int, end: int) -> bytes:
-        bits = []
-        for pi in range(start, end):
-            for c in pixels[pi][:3]:
-                bits.append(c & 1)
-        length = 0
-        for b in bits[:32]:
-            length = (length << 1) | b
-        needed = 32 + length * 8
-        if needed > len(bits):
+    def _read_zone_arr(arr: np.ndarray, start: int, end: int) -> bytes:
+        zone_flat = arr[start:end].reshape(-1)
+        lsb = (zone_flat & 1).astype(np.uint8)
+        if lsb.size < 32:
+            raise ValueError("Zone too small to hold a length header")
+        length = int(np.packbits(lsb[:32]).view(">u4")[0])
+        need = 32 + length * 8
+        if need > lsb.size:
             raise ValueError("Zone too small for stored payload length")
-        data = bytearray()
-        for i in range(32, needed, 8):
-            byte = 0
-            for b in bits[i:i + 8]:
-                byte = (byte << 1) | b
-            data.append(byte)
-        return bytes(data)
+        return np.packbits(lsb[32:need]).tobytes()

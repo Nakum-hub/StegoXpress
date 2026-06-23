@@ -113,12 +113,19 @@ class SendTab(ctk.CTkFrame):
         self.recipient_entry = ReusableWidgets.entry(right, "Recipient email", width=420)
         self.recipient_entry.grid(row=1, column=0, sticky="ew", padx=20, pady=(10, 12))
 
-        self.hint_entry = ReusableWidgets.entry(
+        self.subject_entry = ReusableWidgets.entry(
             right,
-            "Password hint for recipient (do NOT put the password here)",
+            "Email subject (default: generic — do not reveal purpose here)",
             width=420,
         )
-        self.hint_entry.grid(row=2, column=0, sticky="ew", padx=20, pady=(0, 18))
+        self.subject_entry.grid(row=2, column=0, sticky="ew", padx=20, pady=(0, 10))
+
+        self.hint_entry = ReusableWidgets.entry(
+            right,
+            "Message body hint for recipient (do NOT include the password)",
+            width=420,
+        )
+        self.hint_entry.grid(row=3, column=0, sticky="ew", padx=20, pady=(0, 18))
 
         note = (
             "Only the stego image is attached. The agreed decode password must be "
@@ -259,6 +266,7 @@ class SendTab(ctk.CTkFrame):
             image_path, username, password = self.collect_send_fields()
             recipient = self.recipient_entry.get().strip()
             hint = self.hint_entry.get().strip()
+            subject = self.subject_entry.get().strip() if hasattr(self, "subject_entry") else ""
             sender = self.get_sender()
         except ValueError as exc:
             self.fail_send_validation(str(exc))
@@ -282,7 +290,7 @@ class SendTab(ctk.CTkFrame):
         dimensions = self.image_dimensions(image_path)
         description = f"Sent {os.path.basename(image_path)} to {recipient}"
         try:
-            sender.send_stego_image(username, password, recipient, image_path, hint)
+            sender.send_stego_image(username, password, recipient, image_path, hint, subject)
             duration_ms = (time.perf_counter() - start_time) * 1000
             self.log_operation(
                 "send",

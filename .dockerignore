@@ -1,0 +1,14 @@
+.git
+.github
+__pycache__
+*.pyc
+*.pyo
+.pytest_cache
+.coverage
+htmlcov/
+dist/
+build/
+*.spec
+output/
+*.log
+.env

@@ -1,28 +1,13 @@
-"""Pytest configuration for StegoXpress.
-
-Compatibility shim for the legacy CI workflow (.github/workflows/tests.yml),
-which installs only Pillow/cryptography/pytest/qrcode. The v2 engines also
-require numpy, and the workflow file itself cannot be updated through the
-GitHub API without the special 'workflow' permission.
-
-This hook installs numpy (if missing) before test collection, so the existing
-workflow passes. It is a no-op when numpy is already installed.
-
-TODO: Once the workflow is updated to `pip install -r requirements.txt`
-(see docs/UPGRADE_NOTES.md), this shim can be safely removed.
 """
-import importlib
-import subprocess
-import sys
+Pytest configuration for StegoXpress.
 
+All runtime dependencies must be installed before running tests.
+Use:  pip install -r requirements.txt
+      pip install -e ".[dev]"
 
-def _ensure(module_name: str, pip_name: str | None = None) -> None:
-    try:
-        importlib.import_module(module_name)
-    except ImportError:
-        subprocess.check_call(
-            [sys.executable, "-m", "pip", "install", pip_name or module_name]
-        )
-
-
-_ensure("numpy")
+The previous conftest.py used subprocess.check_call to self-install numpy at
+test-collection time. That pattern is an anti-pattern: it mutates the test
+environment silently, is a security risk in CI, and hides missing dependencies
+instead of surfacing them. It has been removed. If numpy is not present, pytest
+will fail at import time with a clear ImportError — which is the correct signal.
+"""

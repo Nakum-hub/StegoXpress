@@ -22,6 +22,7 @@ Most steganography tools just flip pixel bits. StegoXpress encrypts **first** (A
 | 🔥 **Local burn-after-read** | Optionally erases the LSB plane of the working copy after first decode |
 | 📊 **Steganalysis score** | Estimates how detectable your stego image is before you send it |
 | 🌡 **Entropy heatmap** | Visualizes where data is hidden / where it is safest to hide |
+| 💾 **Persistent history** | Operation log survives restarts — stored in `~/.stegoxpress/history.json` |
 
 ## Install
 
@@ -45,23 +46,131 @@ A dark-themed desktop app opens with six tabs: **Encode**, **Decode**, **Send** 
 
 ### CLI
 
+The CLI is designed to be script-friendly and safe for automation.
+
+#### Password security — avoid shell history exposure
+
 ```bash
-# Hide a message (password is read from an environment variable, never shell history)
+# ✅ Recommended: set as env var (never appears in `ps aux` or shell history)
 export STEGO_PASSWORD='my strong passphrase'
-python main.py encode --image cover.png --text "meet at noon" --output secret.png
 
-# Hide a file, sealed against tampering
-python main.py encode --image cover.png --file plans.pdf --seal --output secret.png
-
-# Reveal
-python main.py decode --image secret.png
+# ⚠️  Only when necessary: flag (appears in process listings)
+python main.py encode --image cover.png --text "secret" --password "pass" --output out.png
 ```
 
-Exit codes: `0` success, `1` wrong password / corrupt data, `2` bad arguments, `3` I/O error — script-friendly.
+#### Encode
+
+```bash
+# Hide a text message (LSB, default carrier)
+python main.py encode \
+  --image cover.png \
+  --text "meet at noon" \
+  --output secret.png
+
+# Hide a file with a tamper-proof HMAC seal
+python main.py encode \
+  --image cover.png \
+  --file plans.pdf \
+  --seal \
+  --output secret.png
+
+# Use adaptive LSB (embeds in high-entropy regions — harder to detect)
+python main.py encode \
+  --image cover.png \
+  --text "covert message" \
+  --carrier image-adaptive \
+  --output secret.png
+
+# Hide in PNG metadata chunk (pixels completely untouched)
+python main.py encode \
+  --image cover.png \
+  --text "invisible" \
+  --carrier png-chunk \
+  --output secret.png
+
+# Hide in WAV audio
+python main.py encode \
+  --audio cover.wav \
+  --text "audio secret" \
+  --carrier audio \
+  --output secret.wav
+
+# Mark as self-destruct (LSB plane erased from local copy after first decode)
+python main.py encode \
+  --image cover.png \
+  --text "burn after reading" \
+  --self-destruct \
+  --output secret.png
+```
+
+#### Decode
+
+```bash
+# Decode (password from env var)
+python main.py decode --image secret.png
+
+# Decode and verify tamper-proof seal
+python main.py decode --image secret.png --verify-seal
+
+# Decode adaptive-mode image
+python main.py decode --image secret.png --carrier image-adaptive
+
+# Decode PNG chunk carrier
+python main.py decode --image secret.png --carrier png-chunk
+
+# Decode audio
+python main.py decode --audio secret.wav --carrier audio
+
+# Machine-readable JSON output (for scripts)
+python main.py decode --image secret.png --json
+
+# Save extracted file to a specific directory
+python main.py decode --image secret.png --save-dir ~/Downloads
+```
+
+#### Carrier reference
+
+| `--carrier` value | Carrier | Capacity | Detectability |
+|---|---|---|---|
+| `image-lsb` *(default)* | Image pixels (LSB) | ~37% of image file size | Moderate — scales with payload |
+| `image-adaptive` | Image pixels (high-entropy only) | Less than LSB | Lower — hides where noise already exists |
+| `png-chunk` | Private PNG metadata chunk | Up to file size | Trivially visible to chunk-inspection tools (`pngcheck`) |
+| `audio` | WAV sample LSBs | ~1 bit per 16-bit sample | Low — inaudible quality loss |
+
+#### Exit codes
+
+| Code | Meaning |
+|---|---|
+| `0` | Success |
+| `1` | Wrong password / corrupted / tampered data |
+| `2` | Payload too large for carrier |
+| `3` | File not found / I/O error |
+
+#### Script example
+
+```bash
+#!/usr/bin/env bash
+set -euo pipefail
+
+export STEGO_PASSWORD="$(pass show myproject/stego)"  # or any secret manager
+
+# Encode and capture JSON result
+result=$(python main.py encode \
+  --image cover.png \
+  --file report.pdf \
+  --seal \
+  --output /tmp/stego.png \
+  --json)
+
+echo "$result" | python -c "import sys,json; d=json.load(sys.stdin); print(d['output'])"
+
+# Decode in CI, fail fast on wrong password or tamper
+python main.py decode --image /tmp/stego.png --verify-seal --json
+```
 
 ## Honest security model (read this)
 
-StegoXpress is built to be honest about what it can and cannot do. Full details in [SECURITY.md](SECURITY.md).
+Full details in [SECURITY.md](SECURITY.md).
 
 **It protects against:** casual observers; recovery of the secret without the password (AES-256-GCM); silent tampering (authenticated encryption + seals).
 
@@ -69,9 +178,10 @@ StegoXpress is built to be honest about what it can and cannot do. Full details 
 
 ## Quality
 
-- CI on Python 3.10–3.12: ruff, mypy, pytest with coverage, pip-audit
-- End-to-end test suites covering crypto, Shamir, adaptive LSB determinism, seals, vault, shield, audio and PNG-chunk carriers, plus fuzzing of all untrusted parsers
+- CI on Python 3.10–3.12, Linux/Windows/macOS: ruff, mypy, pytest with coverage, pip-audit
+- 33 tests covering crypto, Shamir, adaptive LSB determinism, seals, vault, shield, audio and PNG-chunk carriers, fuzzing of all untrusted parsers, CLI end-to-end, persistent history, and email safety
 - Versioned, authenticated on-disk format with backward-compatible v1 decryption
+- No deprecated Pillow APIs (Pillow 14 compatible through 2027+)
 
 ## Build a standalone executable
 

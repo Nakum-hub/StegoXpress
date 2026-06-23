@@ -4,20 +4,32 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "stegoxpress"
-version = "2.0.0"
-description = "Encrypted steganography toolkit: AES-256-GCM, hidden vaults, N-of-K secret sharing, and tamper-proof seals."
+version = "2.1.0"
+description = "Encrypted steganography toolkit: AES-256-GCM, hidden vaults, N-of-K secret sharing, tamper-proof seals, GUI and full CLI."
 readme = "README.md"
 requires-python = ">=3.10"
 license = { file = "LICENSE" }
 authors = [{ name = "Nakum-hub" }]
-keywords = ["steganography", "encryption", "security", "lsb", "aes", "shamir"]
+keywords = ["steganography", "encryption", "security", "lsb", "aes", "shamir", "privacy"]
 classifiers = [
     "License :: Other/Proprietary License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Security :: Cryptography",
+    "Topic :: Multimedia :: Graphics",
+    "Environment :: X11 Applications",
+    "Intended Audience :: End Users/Desktop",
 ]
+
+# Core runtime deps — required for both CLI and GUI.
 dependencies = [
-    "Pillow>=10.0",
-    "numpy>=1.24",
-    "cryptography>=42.0",
+    "Pillow>=10.3.0",
+    "numpy>=1.26.0",
+    "cryptography>=42.0.0",
+    "customtkinter>=5.2.0",
+    "tkinterdnd2>=0.4.0",
 ]
 
 [project.optional-dependencies]
@@ -30,12 +42,15 @@ dev = [
     "pip-audit>=2.7",
 ]
 
+[project.scripts]
+stegoxpress = "main:main"
+
 [project.urls]
 Homepage = "https://github.com/Nakum-hub/StegoXpress"
 Issues = "https://github.com/Nakum-hub/StegoXpress/issues"
 
 [tool.setuptools.packages.find]
-include = ["core*", "transport*", "gui*"]
+include = ["core*", "transport*", "gui*", "utils*"]
 
 [tool.ruff]
 line-length = 100
@@ -43,7 +58,6 @@ target-version = "py310"
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "B", "UP", "S"]
-# S101: asserts are fine in tests; tests dir handled per-file below.
 ignore = ["E501"]
 
 [tool.ruff.lint.per-file-ignores]
@@ -58,3 +72,7 @@ warn_redundant_casts = true
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-q"
+
+[tool.coverage.run]
+source = ["core", "transport", "utils"]
+omit = ["tests/*", "gui/*"]

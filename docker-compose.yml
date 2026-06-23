@@ -1,0 +1,41 @@
+# docker-compose.yml — StegoXpress development environment
+#
+# Services
+# --------
+#   test      Run the full test suite (default)
+#   dev       Interactive shell with project mounted for live editing
+#   encode    One-shot CLI encode (pass env vars or edit command)
+#   decode    One-shot CLI decode
+
+version: "3.9"
+
+x-common: &common
+  build: .
+  volumes:
+    - .:/workspace        # live-mount source for dev (rebuilds not needed on code change)
+    - ./output:/out       # output directory for stego images
+
+services:
+  test:
+    <<: *common
+    command: >
+      python -m pytest tests/ -v --tb=short
+      --cov=core --cov=transport --cov=utils
+      --cov-report=term-missing
+
+  dev:
+    <<: *common
+    stdin_open: true
+    tty: true
+    command: bash
+    environment:
+      - STEGO_PASSWORD=${STEGO_PASSWORD:-changeme}
+
+  cli:
+    <<: *common
+    entrypoint: ["python", "main.py"]
+    command: ["--help"]
+    environment:
+      - STEGO_PASSWORD=${STEGO_PASSWORD:-}
+      - STEGO_OUTER_PASSWORD=${STEGO_OUTER_PASSWORD:-}
+      - STEGO_REAL_PASSWORD=${STEGO_REAL_PASSWORD:-}

@@ -1,6 +1,21 @@
-# StegoXpress v2 — runtime dependencies (pinned minimums, audited)
+# StegoXpress runtime dependencies
+# Install: pip install -r requirements.txt
+# Dev:     pip install -e ".[dev]"
+
+# Core image processing
 Pillow>=10.3.0
+
+# Numerical operations (LSB engine, entropy maps, vault zones)
 numpy>=1.26.0
+
+# Cryptography — AES-256-GCM, PBKDF2, HKDF, HMAC
 cryptography>=42.0.0
+
+# GUI
 customtkinter>=5.2.0
 tkinterdnd2>=0.4.0
+
+# KDF — Argon2id (optional but strongly recommended; v3 bundles require it)
+# If not installed, StegoXpress falls back to PBKDF2-SHA256 (600k iterations)
+# and cannot decrypt v3 bundles created on machines where it was installed.
+argon2-cffi>=23.1.0
