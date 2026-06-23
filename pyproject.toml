@@ -69,6 +69,12 @@ ignore_missing_imports = true
 warn_unused_ignores = true
 warn_redundant_casts = true
 
+[[tool.mypy.overrides]]
+# gui/ requires a live display and has incomplete CustomTkinter / tkinterdnd2
+# type stubs. Ignore errors from these modules in all mypy runs.
+module = "gui.*"
+ignore_errors = true
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-q"

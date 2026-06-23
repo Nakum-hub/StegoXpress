@@ -34,7 +34,8 @@ from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 
 # Try to import argon2-cffi for the v3 KDF.  Optional — falls back to PBKDF2.
 try:
-    from argon2.low_level import hash_secret_raw, Type as _Argon2Type  # type: ignore[import]
+    from argon2.low_level import Type as _Argon2Type
+    from argon2.low_level import hash_secret_raw
     _ARGON2_AVAILABLE = True
 except ImportError:
     _ARGON2_AVAILABLE = False

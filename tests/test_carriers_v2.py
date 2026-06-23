@@ -18,12 +18,12 @@ import wave
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+from PIL import Image
+
 from core.audio_engine import AudioEngine
 from core.crypto_engine import CryptoEngine
 from core.file_packer import FilePacker
 from core.png_chunk_engine import PngChunkEngine
-
-from PIL import Image
 
 PASSED = 0
 FAILED = 0
@@ -117,7 +117,7 @@ def test_fuzz_unpack_never_crashes():
         except Exception as exc:
             raise AssertionError(
                 f"iteration {i}: unpack raised {type(exc).__name__} instead of ValueError"
-            )
+            ) from exc
         # If unpack accepted random bytes, type byte must at least be valid —
         # extremely unlikely but not an error in itself for crafted sizes.
 
@@ -133,7 +133,7 @@ def test_fuzz_decrypt_never_crashes():
         except Exception as exc:
             raise AssertionError(
                 f"iteration {i}: decrypt raised {type(exc).__name__} instead of ValueError"
-            )
+            ) from exc
 
 
 def test_sealed_text_tamper_detection():

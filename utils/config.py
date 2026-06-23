@@ -7,7 +7,7 @@ from typing import Any
 class Config:
     CONFIG_DIR = Path.home() / ".stegoxpress"
     CONFIG_PATH = CONFIG_DIR / "config.json"
-    DEFAULTS = {
+    DEFAULTS: dict[str, Any] = {
         "last_output_dir": str(Path.home()),
         "default_provider": "gmail",
         "window_width": 1000,
@@ -16,21 +16,31 @@ class Config:
         "sender_email": "",
         "theme": "dark",
     }
-    _settings = None
+    _settings: dict[str, Any] | None = None
+
+    # ── Private helper — always returns a non-None dict ────────────────────
+
+    @classmethod
+    def _loaded(cls) -> dict[str, Any]:
+        """Ensure settings are loaded and return them (never None)."""
+        if cls._settings is None:
+            cls._ensure_loaded()
+        if cls._settings is None:          # pragma: no cover — _ensure_loaded guarantees this
+            cls._settings = deepcopy(cls.DEFAULTS)
+        return cls._settings
+
+    # ── Public API ──────────────────────────────────────────────────────────
 
     @classmethod
     def get(cls, key: str) -> Any:
-        cls._ensure_loaded()
-        return cls._settings.get(key, cls.DEFAULTS.get(key))
+        return cls._loaded().get(key, cls.DEFAULTS.get(key))
 
     @classmethod
     def set(cls, key: str, value: Any) -> None:
-        cls._ensure_loaded()
-        cls._settings[key] = value
-
+        s = cls._loaded()
+        s[key] = value
         if key == "remember_sender_email" and not value:
-            cls._settings["sender_email"] = ""
-
+            s["sender_email"] = ""
         cls._save()
 
     @classmethod
@@ -39,38 +49,38 @@ class Config:
         cls._save()
 
     @classmethod
-    def as_dict(cls) -> dict:
-        cls._ensure_loaded()
-        return deepcopy(cls._settings)
+    def as_dict(cls) -> dict[str, Any]:
+        return deepcopy(cls._loaded())
+
+    # ── Internal ────────────────────────────────────────────────────────────
 
     @classmethod
     def _ensure_loaded(cls) -> None:
         if cls._settings is not None:
             return
-
-        settings = deepcopy(cls.DEFAULTS)
+        settings: dict[str, Any] = deepcopy(cls.DEFAULTS)
         try:
             if cls.CONFIG_PATH.exists():
-                with open(cls.CONFIG_PATH, "r", encoding="utf-8") as config_file:
-                    loaded = json.load(config_file)
+                with open(cls.CONFIG_PATH, encoding="utf-8") as f:
+                    loaded = json.load(f)
                 if isinstance(loaded, dict):
                     settings.update(loaded)
         except (OSError, json.JSONDecodeError):
             settings = deepcopy(cls.DEFAULTS)
-
         if not settings.get("remember_sender_email", False):
             settings["sender_email"] = ""
-
         cls._settings = settings
         cls._save()
 
     @classmethod
     def _save(cls) -> None:
-        cls.CONFIG_DIR.mkdir(parents=True, exist_ok=True)
-        settings = deepcopy(cls._settings)
-
-        if not settings.get("remember_sender_email", False):
-            settings["sender_email"] = ""
-
-        with open(cls.CONFIG_PATH, "w", encoding="utf-8") as config_file:
-            json.dump(settings, config_file, indent=2)
+        settings = cls._loaded()
+        try:
+            cls.CONFIG_DIR.mkdir(parents=True, exist_ok=True)
+            out: dict[str, Any] = deepcopy(settings)
+            if not out.get("remember_sender_email", False):
+                out["sender_email"] = ""
+            with open(cls.CONFIG_PATH, "w", encoding="utf-8") as f:
+                json.dump(out, f, indent=2)
+        except OSError:
+            pass

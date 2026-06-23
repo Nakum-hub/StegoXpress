@@ -13,9 +13,8 @@ import json
 import os
 import struct
 import sys
-import tempfile
-import wave
 import warnings
+import wave
 
 import numpy as np
 import pytest
@@ -29,7 +28,6 @@ from core.lsb_engine import LSBEngine
 from core.vault_engine import VaultEngine
 from transport.email_sender import EmailSender
 from utils.history import PersistentHistory
-
 
 # ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -66,7 +64,7 @@ def test_cli_env_var_password(tmp_path):
     out = str(tmp_path / "stego.png")
     img.save(cover)
 
-    os.environ["STEGO_PASSWORD"] = "env-var-test-pass!"
+    os.environ["STEGO_PASSWORD"] = "env-var-test-pass!"  # noqa: S105
     try:
         rc = _run_cli("encode", "--image", cover, "--text", "hello env", "--output", out)
         assert rc == 0, "encode with env-var password failed"
@@ -528,8 +526,6 @@ def test_cli_steganalysis_detects_heavy_payload(tmp_path, capsys):
 
     pw = "steg-score-pw!"
     # Pack the full capacity with encrypted data
-    from core.crypto_engine import CryptoEngine
-    from core.lsb_engine import LSBEngine
     capacity = LSBEngine.capacity_bytes(img)
     payload = bytes(range(256)) * (capacity // 256)
     enc = CryptoEngine.encrypt(payload, pw, use_argon2=False)
@@ -546,7 +542,6 @@ def test_cli_steganalysis_detects_heavy_payload(tmp_path, capsys):
 # ── CryptoEngine v3 (Argon2id) ───────────────────────────────────────────────
 
 def test_crypto_v3_argon2id_roundtrip():
-    from core.crypto_engine import CryptoEngine
     if not CryptoEngine.argon2_available():
         pytest.skip("argon2-cffi not installed")
 
@@ -558,7 +553,6 @@ def test_crypto_v3_argon2id_roundtrip():
 
 
 def test_crypto_v3_wrong_password_fails():
-    from core.crypto_engine import CryptoEngine
     if not CryptoEngine.argon2_available():
         pytest.skip("argon2-cffi not installed")
 
@@ -569,7 +563,6 @@ def test_crypto_v3_wrong_password_fails():
 
 def test_crypto_v3_force_pbkdf2_fallback():
     """use_argon2=False must produce v2 (PBKDF2) bundle even if argon2-cffi is installed."""
-    from core.crypto_engine import CryptoEngine
     bundle = CryptoEngine.encrypt(b"pbkdf2 test", "pw!", use_argon2=False)
     assert bundle[:4] == b"SXP2", f"Expected SXP2 magic, got {bundle[:4]}"
     assert CryptoEngine.decrypt(bundle, "pw!") == b"pbkdf2 test"

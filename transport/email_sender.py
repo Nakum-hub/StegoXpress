@@ -5,14 +5,14 @@ from email.message import EmailMessage
 
 
 class EmailSender:
-    PROVIDERS = {
-        "gmail": {"host": "smtp.gmail.com", "port": 587, "tls": True},
-        "outlook": {"host": "smtp.outlook.com", "port": 587, "tls": True},
-        "yahoo": {"host": "smtp.mail.yahoo.com", "port": 587, "tls": True},
-        "custom": {"host": None, "port": None, "tls": True},
+    PROVIDERS: dict[str, dict[str, object]] = {
+        "gmail":   {"host": "smtp.gmail.com",      "port": 587, "tls": True},
+        "outlook": {"host": "smtp.outlook.com",     "port": 587, "tls": True},
+        "yahoo":   {"host": "smtp.mail.yahoo.com",  "port": 587, "tls": True},
+        "custom":  {"host": None,                   "port": None, "tls": True},
     }
 
-    def __init__(self, provider: str, host: str = None, port: int = None):
+    def __init__(self, provider: str, host: str | None = None, port: int | None = None):
         if provider not in self.PROVIDERS:
             raise ValueError("Unsupported email provider")
 
@@ -24,9 +24,9 @@ class EmailSender:
             self.tls = True
         else:
             config = self.PROVIDERS[provider]
-            self.host = config["host"]
-            self.port = config["port"]
-            self.tls = config["tls"]
+            self.host = str(config["host"]) if config["host"] is not None else ""
+            self.port = int(str(config["port"])) if config["port"] is not None else 0
+            self.tls = bool(config["tls"])
 
         self.provider = provider
 

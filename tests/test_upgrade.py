@@ -14,8 +14,8 @@ from core.crypto_engine import CryptoEngine
 from core.file_packer import FilePacker
 from core.lsb_engine import LSBEngine
 from core.shamir_engine import ShamirEngine
-from core.vault_engine import VaultEngine
 from core.shield_engine import ShieldEngine
+from core.vault_engine import VaultEngine
 from transport.key_manager import KeyManager
 
 
@@ -33,7 +33,8 @@ def test_crypto_roundtrip_and_tamper():
         raise AssertionError("wrong password should fail")
     except ValueError:
         pass
-    tampered = bytearray(ct); tampered[-1] ^= 0x01
+    tampered = bytearray(ct)
+    tampered[-1] ^= 0x01
     try:
         CryptoEngine.decrypt(bytes(tampered), "correct horse")
         raise AssertionError("tamper should fail")
@@ -87,7 +88,8 @@ def test_file_packer_seal():
     except ValueError:
         pass
     # tamper fails
-    t = bytearray(sealed); t[5] ^= 0x01
+    t = bytearray(sealed)
+    t[5] ^= 0x01
     try:
         FilePacker.verify_and_unpack_sealed(bytes(t), "pw-123456789")
         raise AssertionError("tampered seal should fail")

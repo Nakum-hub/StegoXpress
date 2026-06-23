@@ -135,7 +135,7 @@ class LSBEngine:
                     if entropy_values[i] >= threshold]
 
         bits_needed = payload_length * 8
-        raw_bits = []
+        raw_bits: list[int] = []
         for pi in filtered:
             if len(raw_bits) >= bits_needed:
                 break
@@ -172,6 +172,8 @@ class LSBEngine:
         if w < 8:
             return 0.0
         sp = st.load()
+        if sp is None:
+            return 0.0
         reg = sing = total = 0
         mask = [0, 1, 0, 1, 0, 1, 0, 1]
         for y in range(h):

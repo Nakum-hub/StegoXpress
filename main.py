@@ -26,7 +26,6 @@ import json
 import os
 import sys
 import time
-from datetime import datetime
 
 from PIL import Image
 
@@ -35,8 +34,8 @@ from core.crypto_engine import CryptoEngine
 from core.file_packer import FilePacker
 from core.lsb_engine import LSBEngine
 from core.png_chunk_engine import PngChunkEngine
-from core.vault_engine import VaultEngine
 from core.shield_engine import ShieldEngine
+from core.vault_engine import VaultEngine
 from utils.logger import StegoLogger
 
 __version__ = "2.1.0"
@@ -400,7 +399,7 @@ def _emit(args, *, status: str = "failed", error: str = "", **fields) -> None:
         return
 
     if error:
-        print(f"Status: failed")
+        print("Status: failed")
         print(f"Error:  {error}")
         if "detail" in fields:
             print(f"Detail: {fields['detail']}")
@@ -448,21 +447,9 @@ def elapsed_ms(start: float) -> float:
 
 
 # ── Dispatch ─────────────────────────────────────────────────────────────────
-
-def run_cli(argv: list[str]) -> int:
-    parser = build_parser()
-    args = parser.parse_args(argv)
-
-    if args.command == "version":
-        print(f"StegoXpress {__version__}")
-        return EXIT_SUCCESS
-    if args.command == "encode":
-        return cli_encode(args)
-    if args.command == "decode":
-        return cli_decode(args)
-
-    parser.print_help()
-    return EXIT_FILE_NOT_FOUND
+# run_cli is defined after all subcommand handlers (below) so it can reference
+# vault/shield/info/heatmap/steganalysis functions. main() resolves run_cli at
+# call time, not definition time, so the late definition is always used.
 
 
 def run_gui() -> None:
@@ -528,7 +515,6 @@ def _add_vault_parser(sub):
 
 def cli_vault_encode(args) -> int:
     from core.file_packer import FilePacker
-    from core.vault_engine import VaultEngine
 
     start = time.perf_counter()
 
@@ -583,9 +569,7 @@ def cli_vault_encode(args) -> int:
 
 
 def cli_vault_decode(args) -> int:
-    from core.crypto_engine import CryptoEngine
     from core.file_packer import FilePacker
-    from core.vault_engine import VaultEngine
 
     start = time.perf_counter()
     password = resolve_password(args.password)
@@ -669,7 +653,6 @@ def _add_shield_parser(sub):
 
 def cli_shield_encode(args) -> int:
     from core.file_packer import FilePacker
-    from core.shield_engine import ShieldEngine
 
     start = time.perf_counter()
 
@@ -725,7 +708,6 @@ def cli_shield_encode(args) -> int:
 
 def cli_shield_decode(args) -> int:
     from core.file_packer import FilePacker
-    from core.shield_engine import ShieldEngine
 
     start = time.perf_counter()
 
@@ -781,9 +763,9 @@ def _add_info_parser(sub):
 
 def cli_info(args) -> int:
     import wave
+
     from core.crypto_engine import CryptoEngine
     from core.lsb_engine import LSBEngine
-    from core.vault_engine import VaultEngine
 
     source = args.image or args.audio
     if not source:
@@ -795,11 +777,11 @@ def cli_info(args) -> int:
 
     if args.audio:
         try:
-            with wave.open(args.audio, "rb") as w:
-                channels = w.getnchannels()
-                sampwidth = w.getsampwidth()
-                rate = w.getframerate()
-                nframes = w.getnframes()
+            with wave.open(args.audio, "rb") as wav_file:
+                channels = wav_file.getnchannels()
+                sampwidth = wav_file.getsampwidth()
+                rate = wav_file.getframerate()
+                nframes = wav_file.getnframes()
             duration_s = nframes / rate
             lsb_cap = (nframes * channels) // 8 - 4
             _emit_info(args, dict(
@@ -962,7 +944,7 @@ def cli_steganalysis(args) -> int:
                 duration_ms=round(dur, 1),
             )))
         else:
-            print(f"Status:   success")
+            print("Status:   success")
             print(f"Score:    {score:.4f}  (0.0 = identical, 1.0 = maximally detectable)")
             print(f"Rating:   {label.strip()}")
             print(f"Duration: {dur:.0f} ms")
@@ -990,7 +972,7 @@ def _find_subparsers(parser: argparse.ArgumentParser):
     raise RuntimeError("No subparsers action found in parser")
 
 
-def run_cli(argv: list[str]) -> int:  # noqa: F811 — intentional redefinition
+def run_cli(argv: list[str]) -> int:
     """
     Extended CLI dispatcher.
     Builds the base parser then appends vault/shield/info/heatmap/steganalysis.

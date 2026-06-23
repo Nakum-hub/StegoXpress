@@ -15,7 +15,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - name: Install dev dependencies
+      - name: Install dependencies
         run: |
           pip install --upgrade pip
           pip install ruff mypy
@@ -23,7 +23,15 @@ jobs:
       - name: ruff check
         run: ruff check core/ transport/ utils/ main.py tests/
       - name: mypy
-        run: mypy core/ transport/ utils/ main.py --ignore-missing-imports
+        # gui/ is suppressed via [[tool.mypy.overrides]] in pyproject.toml
+        # (requires a display; incomplete Tk/CTk stubs — tested on desktop instead).
+        # Run each package separately to avoid a mypy false-positive where it
+        # confuses main.py with a "__main__" module when all dirs are passed together.
+        run: |
+          mypy main.py    --ignore-missing-imports
+          mypy core/      --ignore-missing-imports
+          mypy transport/ --ignore-missing-imports
+          mypy utils/     --ignore-missing-imports
 
   audit:
     name: Dependency audit (pip-audit)
@@ -33,12 +41,12 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - name: Install pip-audit
-        run: pip install pip-audit
-      - name: Install project dependencies
-        run: pip install -r requirements.txt
-      - name: Audit
-        run: pip-audit --require-hashes -r requirements.txt || pip-audit -r requirements.txt
+      - name: Install pip-audit and deps
+        run: |
+          pip install pip-audit
+          pip install -r requirements.txt
+      - name: Audit (best-effort — no hash pinning required)
+        run: pip-audit -r requirements.txt
 
   test:
     name: Tests — Python ${{ matrix.python-version }} / ${{ matrix.os }}
@@ -64,46 +72,51 @@ jobs:
           pip install pytest pytest-cov "qrcode[pil]"
 
       - name: Run tests with coverage
-        run: python -m pytest tests/ -v --tb=short --cov=core --cov=transport --cov=utils --cov-report=term-missing
+        run: |
+          python -m pytest tests/ -v --tb=short \
+            --cov=core --cov=transport --cov=utils \
+            --cov-report=term-missing
 
       - name: Smoke-test CLI encode → decode roundtrip
-        shell: bash
         run: |
           python main.py encode \
             --image assets/logo.png \
             --message "CI smoke test" \
-            --output /tmp/ci_stego.png \
+            --output "${{ runner.temp }}/ci_stego.png" \
             --password "ci-test-password-2026!"
           python main.py decode \
-            --image /tmp/ci_stego.png \
+            --image "${{ runner.temp }}/ci_stego.png" \
             --password "ci-test-password-2026!"
 
       - name: Smoke-test CLI seal mode
-        shell: bash
         run: |
           python main.py encode \
             --image assets/logo.png \
             --message "sealed payload" \
-            --output /tmp/ci_sealed.png \
+            --output "${{ runner.temp }}/ci_sealed.png" \
             --password "ci-test-password-2026!" \
             --seal
           python main.py decode \
-            --image /tmp/ci_sealed.png \
+            --image "${{ runner.temp }}/ci_sealed.png" \
             --password "ci-test-password-2026!" \
             --verify-seal
 
       - name: Smoke-test CLI adaptive mode
-        shell: bash
         run: |
           python main.py encode \
             --image assets/logo.png \
             --message "adaptive test" \
-            --output /tmp/ci_adaptive.png \
+            --output "${{ runner.temp }}/ci_adaptive.png" \
             --password "ci-test-password-2026!" \
-            --adaptive
+            --carrier image-adaptive
           python main.py decode \
-            --image /tmp/ci_adaptive.png \
-            --password "ci-test-password-2026!"
+            --image "${{ runner.temp }}/ci_adaptive.png" \
+            --password "ci-test-password-2026!" \
+            --carrier image-adaptive
+
+      - name: Smoke-test CLI info subcommand
+        run: |
+          python main.py info --image assets/logo.png --json
 
       - name: Verify import health
         run: |
@@ -115,3 +128,5 @@ jobs:
           python -c "from core.shield_engine import ShieldEngine; print('ShieldEngine OK')"
           python -c "from transport.key_manager import KeyManager; print('KeyManager OK')"
           python -c "from utils.config import Config; print('Config OK')"
+          python -c "from utils.history import PersistentHistory; print('PersistentHistory OK')"
+          python -c "from core.crypto_engine import CryptoEngine; print('Argon2id:', CryptoEngine.argon2_available())"

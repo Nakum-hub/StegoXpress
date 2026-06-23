@@ -3,10 +3,9 @@ import hmac
 import os
 import struct
 
-from PIL import Image
-
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
+from PIL import Image
 
 from core.lsb_engine import LSBEngine
 

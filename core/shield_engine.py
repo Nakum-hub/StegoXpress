@@ -5,7 +5,9 @@ Each image carries one Shamir share. Any K images reconstruct the secret.
 the size they used to be.)
 """
 import struct
+
 from PIL import Image
+
 from core.crypto_engine import CryptoEngine
 from core.lsb_engine import LSBEngine
 from core.shamir_engine import ShamirEngine
@@ -20,7 +22,7 @@ class ShieldEngine:
         encrypted = CryptoEngine.encrypt(payload, password)
         shares = ShamirEngine.split(encrypted, n, k)
         result = []
-        for i, (image, share_data) in enumerate(zip(cover_images, shares)):
+        for i, (image, share_data) in enumerate(zip(cover_images, shares, strict=False)):
             header = struct.pack(">BBB", n, k, i + 1)
             stego = LSBEngine.encode(image, header + share_data)
             result.append(stego)
